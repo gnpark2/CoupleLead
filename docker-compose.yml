@@ -1,0 +1,144 @@
+version: "3.9"
+
+services:
+
+  mysql:
+    image: mysql:8.4
+    container_name: couplead-mysql
+
+    restart: always
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: couplead
+      TZ: Asia/Seoul
+
+    ports:
+      - "3306:3306"
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    command:
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+
+  redis:
+
+    image: redis:8
+
+    container_name: couplead-redis
+
+    restart: always
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis-data:/data
+
+  kafka:
+
+    image: apache/kafka:4.0.0
+
+    container_name: couplead-kafka
+
+    restart: always
+
+    ports:
+      - "9092:9092"
+
+    environment:
+
+      KAFKA_NODE_ID: 1
+
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+
+  kafka-ui:
+
+    image: provectuslabs/kafka-ui
+
+    container_name: couplead-kafka-ui
+
+    restart: always
+
+    ports:
+      - "8081:8080"
+
+    depends_on:
+      - kafka
+
+    environment:
+
+      KAFKA_CLUSTERS_0_NAME: local
+
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+
+  elasticsearch:
+
+    image: elasticsearch:9.1.2
+
+    container_name: couplead-elasticsearch
+
+    restart: always
+
+    environment:
+
+      discovery.type: single-node
+
+      xpack.security.enabled: "false"
+
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+
+    ports:
+
+      - "9200:9200"
+
+    volumes:
+
+      - elastic-data:/usr/share/elasticsearch/data
+
+  kibana:
+
+    image: kibana:9.1.2
+
+    container_name: couplead-kibana
+
+    restart: always
+
+    depends_on:
+      - elasticsearch
+
+    environment:
+
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+
+    ports:
+
+      - "5601:5601"
+
+volumes:
+
+  mysql-data:
+
+  redis-data:
+
+  elastic-data:
