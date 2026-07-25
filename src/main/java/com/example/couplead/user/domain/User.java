@@ -1,7 +1,14 @@
+package com.example.couplead.user.domain;
+
+import com.example.couplead.common.entity.BaseEntity;
+
+import jakarta.persistence.*;
+import lombok.*;
+
 @Entity
 @Getter
 @Builder
-@NoargsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Table(
     name = "users",
@@ -32,7 +39,7 @@ public class User extends BaseEntity {
 
     private String providerId;
 
-    @Enumrated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
