@@ -16,3 +16,7 @@ Content-Type: application/json
   "email": "test@test.com",
   "password": "12345678"
 }
+
+### 정보 조회
+GET http://localhost:8080/api/users/me
+Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwicm9sZSI6IlVTRVIiLCJpYXQiOjE3ODUzMzc5NzAsImV4cCI6MTc4NTMzOTc3MH0.lwT3iCX0dA2W8UMBWwn9HgJOXzSTrfqG5CldcSxZpWZvNdBQjkmiP-WR_5gCPOZA3G32mrvWkBcX406ekMFXlQ

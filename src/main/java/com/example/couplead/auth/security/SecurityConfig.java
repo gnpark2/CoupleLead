@@ -10,10 +10,14 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, DaoAuthenticationProvider authenticationProvider) throws Exception {
             http
@@ -25,8 +29,10 @@ public class SecurityConfig {
                     )
                 )
                 .authenticationProvider(authenticationProvider)
-                .authorizeHttpRequests(auth ->
-                    auth.requestMatchers(
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(
                         "/api/auth/**",
                         "/api/test/**",
                         "/swagger-ui/**",
@@ -40,12 +46,7 @@ public class SecurityConfig {
         }
     
     @Bean
-    AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
-        return configuration.getAuthenticationManager();
-    }
-
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider(
+    DaoAuthenticationProvider authenticationProvider(
         CustomUserDetailsService customUserDetailsService,
         PasswordEncoder passwordEncoder
     ) {
@@ -54,4 +55,10 @@ public class SecurityConfig {
 
         return provider;
     }
+    
+    @Bean
+    AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager();
+    }
+
 }
