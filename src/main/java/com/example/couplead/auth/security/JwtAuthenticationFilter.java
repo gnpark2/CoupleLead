@@ -44,7 +44,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
+            } else {
+                // 토큰이 유효하지 않은 경우, SecurityContext를 초기화하여 인증되지 않은 상태로 설정
+                SecurityContextHolder.clearContext();
             }
+        } else {
+            // Authorization 헤더가 없거나 Bearer로 시작하지 않는 경우, SecurityContext를 초기화하여 인증되지 않은 상태로 설정
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);

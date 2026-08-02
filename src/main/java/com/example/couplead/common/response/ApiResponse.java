@@ -19,4 +19,12 @@ public class ApiResponse<T> {
                 .data(data)
                 .build();
     }
+    public static ApiResponse<Void> success() {
+        return ApiResponse.<Void>builder()
+                .success(true)
+                .code(200)
+                .message("요청에 성공했습니다.")
+                .data(null)
+                .build();
+    }
 }

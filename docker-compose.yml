@@ -31,14 +31,14 @@ services:
 
     container_name: couplead-redis
 
+    restart: always
+    
     command: >
       redis-server
       --requirepass ${REDIS_PASSWORD}
 
     environment:
       TZ: Asia/Seoul
-
-    restart: always
 
     ports:
       - "6379:6379"
