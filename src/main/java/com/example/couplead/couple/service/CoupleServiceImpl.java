@@ -1,6 +1,8 @@
 package com.example.couplead.couple.service;
 
 import java.security.SecureRandom;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.RedisTemplate;
@@ -14,10 +16,13 @@ import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.domain.CoupleRole;
 import com.example.couplead.couple.domain.CoupleStatus;
 import com.example.couplead.couple.dto.request.ConnectRequest;
+import com.example.couplead.couple.dto.request.UpdateAnniversaryRequest;
 import com.example.couplead.couple.dto.response.CoupleResponse;
 import com.example.couplead.couple.dto.response.InviteCodeResponse;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
 import com.example.couplead.couple.repository.CoupleRepository;
+import com.example.couplead.event.dto.CoupleAnniversaryUpdatedEvent;
+import com.example.couplead.event.producer.CoupleEventProducer;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
 
@@ -33,6 +38,7 @@ public class CoupleServiceImpl implements CoupleService {
     private final CoupleRepository coupleRepository;
     private final UserRepository userRepository;
     private final CoupleMemberRepository coupleMemberRepository;
+    private final CoupleEventProducer coupleEventProducer;
 
     @Override
     public InviteCodeResponse createInviteCode(Long userId) {
@@ -101,7 +107,38 @@ public class CoupleServiceImpl implements CoupleService {
     @Override
     @Transactional(readOnly = true)
     public CoupleResponse getMyCouple(Long userId) {
-        throw new UnsupportedOperationException();
+        User me = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        CoupleMember coupleMember = coupleMemberRepository.findByUser(me)
+            .orElseThrow(() -> new CustomException(ErrorCode.COUPLE_NOT_FOUND));
+
+        Couple couple = coupleMember.getCouple();
+
+        CoupleMember partnerMember = coupleMemberRepository.findByCouple(couple)
+            .stream()
+            .filter(member -> !member.getUser().getId().equals(userId))
+            .findFirst()
+            .orElseThrow(() -> new CustomException(ErrorCode.COUPLE_NOT_FOUND));
+
+        User partner = partnerMember.getUser();
+
+        Long daysTogether = null;
+
+        if (couple.getAnniversary() != null) {
+            daysTogether = ChronoUnit.DAYS.between(couple.getAnniversary(), LocalDate.now());
+        }
+
+        return new CoupleResponse(
+            couple.getId(),
+            partner.getId(),
+            partner.getNickname(),
+            partner.getProfileImage(),
+            partner.getCountry(),
+            partner.getTimezone(),
+            couple.getAnniversary(),
+            daysTogether
+        );
     }
 
     @Override
@@ -116,5 +153,18 @@ public class CoupleServiceImpl implements CoupleService {
             sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
         }
         return sb.toString();
+    }
+
+    @Override
+    public void updateAnniversary(Long userId, UpdateAnniversaryRequest request) {
+        User me = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        CoupleMember myMember = coupleMemberRepository.findByUser(me).orElseThrow(() -> new CustomException(ErrorCode.COUPLE_NOT_FOUND));
+        Couple couple = myMember.getCouple();
+
+        couple.updateAnniversary(request.anniversary());
+
+        coupleEventProducer.publishAnniversaryUpdated(
+            new CoupleAnniversaryUpdatedEvent(couple.getId(), couple.getAnniversary())
+        );
     }
 }

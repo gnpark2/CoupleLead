@@ -19,4 +19,16 @@ public class RedisConfig {
 
         return template;
     }
+
+    @Bean
+    RedisTemplate<String, Object> objectRedisTemplate(RedisConnectionFactory connectionFactory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(new StringRedisSerializer());
+
+        return template;
+    }
 }

@@ -4,8 +4,13 @@ import java.time.LocalDate;
 
 public record CoupleResponse(
     Long coupleId,
+    Long partnerId,
     String partnerNickname,
-    LocalDate anniversary
+    String partnerProfileImage,
+    String partnerCountry,
+    String partnerTimezone,
+    LocalDate anniversary,
+    Long daysTogether
 ) {
     
 }

@@ -26,10 +26,14 @@ public class Couple extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    private LocalDate connectedAt;
     private LocalDate anniversary;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CoupleStatus status;
+
+    public void updateAnniversary(LocalDate anniversary) {
+        this.anniversary = anniversary;
+    }
 }

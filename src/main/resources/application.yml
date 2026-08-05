@@ -24,6 +24,21 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    consumer:
+      group-id: widget-cache-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+      properties:
+        spring.json.trusted.packages: com.example.couplead.event.dto
+        spring.json.value.default.type: com.example.couplead.event.dto.CoupleAnniversaryUpdatedEvent
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+      #  객체를 JSON으로 직렬화
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
   elasticsearch:
     uris: ${ELASTICSEARCH_URI}
