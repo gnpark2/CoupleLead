@@ -106,3 +106,9 @@ Content-Type: application/json
 ### 커플 위젯 조회
 GET http://localhost:8080/api/widgets/couple
 Authorization: Bearer {{accessToken}}
+
+########################################################################
+
+### Chat 조회
+GET http://localhost:8080/api/chat/1
+Authorization: Bearer {{accessToken}}

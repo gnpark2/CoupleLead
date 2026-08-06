@@ -37,7 +37,18 @@ public class SecurityConfig {
                         "/api/auth/**",
                         "/api/test/**",
                         "/swagger-ui/**",
-                        "/v3/api-docs/**"
+                        "/v3/api-docs/**",
+                        // jwt websocket 구현 전까지 임시 허용
+                        "/ws",
+                        "/ws/**",
+                        // static resource 허용
+                        "chat-test.html",
+                        "/",
+                        "/css/**",
+                        "/js/**",
+                        "/images/**",
+                        "webjars/**",
+                        "/favicon.ico"
                     )
                     .permitAll()
                     .anyRequest()
