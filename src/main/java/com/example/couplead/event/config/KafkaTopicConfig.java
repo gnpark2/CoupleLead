@@ -20,4 +20,13 @@ public class KafkaTopicConfig {
             (short) 1
         );
     }
+
+    @Bean
+    NewTopic chatReadTopic() {
+        return new NewTopic(
+            "chat-read",
+            1,
+            (short) 1
+        );
+    }
 }

@@ -9,4 +9,9 @@ public interface ChatService {
         Long userId,
         Long coupleId
     );
+
+    void markAsRead(
+        Long userId,
+        Long coupleId
+    );
 }

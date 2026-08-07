@@ -43,6 +43,7 @@
 
 <input id="message" placeholder="메시지를 입력하세요">
 <button onclick="sendMessage()">Send</button>
+<button onclick="markRead()">Read</button>
 
 <div id="chat"></div>
 
@@ -56,26 +57,28 @@
 
         stompClient = Stomp.over(socket);
 
-        stompClient.connect({}, function(frame) {
+        stompClient.connect(
+            {
+                Authorization: 'Bearer ' + localStorage.getItem('accessToken')
+            },
+            function(frame) {
 
-            log('Connected: ' + frame);
-            console.log('Connected', frame);
+                log('Connected');
 
-        },
-        
-        function(error) {
-            log('Connection failed');
-            console.error(error);
-            stompClient = null;
-        }
-    );
+            },
+            function(error) {
+
+                log('Connection failed');
+
+            }
+        );
     }
 
     function subscribeChat() {
 
         stompClient.subscribe('/topic/chat/1', function(message) {
 
-            log(message.body);
+            log('Read: ' + message.body);
 
         });
 
@@ -102,6 +105,16 @@
         );
 
         document.getElementById('message').value = '';
+    }
+
+    async function markRead() {
+        await fetch('/api/chat/1/read', {
+            method: 'POST',
+            headers: {
+                'Authorization':
+                    'Bearer ' + localStorage.getItem('accessToken')
+            }
+        });
     }
 
     function log(text) {

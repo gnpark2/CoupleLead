@@ -1,5 +1,6 @@
 package com.example.couplead.chat.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -12,6 +13,8 @@ import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.couple.domain.Couple;
 import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
+import com.example.couplead.event.dto.ChatReadEvent;
+import com.example.couplead.event.producer.ChatReadEventProducer;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
 
@@ -24,6 +27,7 @@ public class ChatServiceImpl implements ChatService {
     private final UserRepository userRepository;
     private final CoupleMemberRepository coupleMemberRepository;
     private final MessageRepository messageRepository;
+    private final ChatReadEventProducer chatReadEventProducer;
 
     @Override
     public List<ChatHistoryResponse> getMessages(Long userId, Long coupleId) {
@@ -51,5 +55,18 @@ public class ChatServiceImpl implements ChatService {
                 message.getReadAt()
             ))
             .toList();
+    }
+
+    @Override
+    @Transactional
+    public void markAsRead(Long userId, Long coupleId) {
+        LocalDateTime now = LocalDateTime.now();
+        int updated = messageRepository.markAsRead(coupleId, userId, now);
+
+        if (updated > 0) {
+            chatReadEventProducer.publish(
+                new ChatReadEvent(coupleId, userId, now)
+            );
+        }
     }
 }
