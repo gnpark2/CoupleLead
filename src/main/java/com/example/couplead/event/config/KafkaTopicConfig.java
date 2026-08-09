@@ -29,4 +29,22 @@ public class KafkaTopicConfig {
             (short) 1
         );
     }
+
+    @Bean
+    NewTopic presenceTopic() {
+        return new NewTopic(
+            "user-presence",
+            1,
+            (short) 1
+        );
+    }
+
+    @Bean
+    NewTopic chatTypingTopic() {
+        return new NewTopic(
+            "chat-typing", 
+            1,
+            (short) 1
+        );
+    }
 }

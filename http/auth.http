@@ -112,3 +112,9 @@ Authorization: Bearer {{accessToken}}
 ### Chat 조회
 GET http://localhost:8080/api/chat/1
 Authorization: Bearer {{accessToken}}
+
+########################################################################
+
+### 접속 조회
+GET http://localhost:8080/api/presence/1
+Authorization: Bearer {{accessToken}}
