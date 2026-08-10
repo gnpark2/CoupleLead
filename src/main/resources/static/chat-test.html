@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <title>Couple Chat Test</title>
@@ -32,102 +33,149 @@
         }
     </style>
 </head>
+
 <body>
 
-<h2>Couple Chat Test</h2>
+    <h2>Couple Chat Test</h2>
 
-<button onclick="connect()">Connect</button>
-<button onclick="subscribeChat()">Subscribe</button>
+    <button onclick="connect()">Connect</button>
+    <button onclick="subscribeChat()">Subscribe</button>
 
-<br><br>
+    <br><br>
 
-<input id="message" placeholder="메시지를 입력하세요">
-<button onclick="sendMessage()">Send</button>
-<button onclick="markRead()">Read</button>
+    <input id="message" placeholder="메시지를 입력하세요" oninput="typing()">
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="markRead()">Read</button>
+    <div id="typing"></div>
 
-<div id="chat"></div>
+    <div id="chat"></div>
 
-<script>
+    <script>
 
-    let stompClient = null;
+        let stompClient = null;
 
-    function connect() {
+        function connect() {
 
-        const socket = new SockJS('/ws');
+            const socket = new SockJS('/ws');
 
-        stompClient = Stomp.over(socket);
+            stompClient = Stomp.over(socket);
 
-        stompClient.connect(
-            {
-                Authorization: 'Bearer ' + localStorage.getItem('accessToken')
-            },
-            function(frame) {
+            stompClient.connect(
+                {
+                    Authorization: 'Bearer ' + localStorage.getItem('accessToken')
+                },
+                function (frame) {
 
-                log('Connected');
+                    log('Connected');
 
-            },
-            function(error) {
+                },
+                function (error) {
 
-                log('Connection failed');
+                    log('Connection failed');
 
-            }
-        );
-    }
-
-    function subscribeChat() {
-
-        stompClient.subscribe('/topic/chat/1', function(message) {
-
-            log('Read: ' + message.body);
-
-        });
-
-        log('Subscribed: /topic/chat/1');
-    }
-
-    function sendMessage() {
-        
-        if (!stompClient || !stompClient.connected) {
-            log('먼저 Connect 하세요.');
-            return;
+                }
+            );
         }
 
-        const content =
-            document.getElementById('message').value;
+        function subscribeChat() {
 
-        stompClient.send(
-            '/pub/chat/send',
-            {},
-            JSON.stringify({
-                coupleId: 1,
-                content: content
-            })
-        );
+            stompClient.subscribe('/topic/chat/1', function (message) {
 
-        document.getElementById('message').value = '';
-    }
+                log('CHAT: ' + message.body);
 
-    async function markRead() {
-        await fetch('/api/chat/1/read', {
-            method: 'POST',
-            headers: {
-                'Authorization':
-                    'Bearer ' + localStorage.getItem('accessToken')
+            });
+
+            stompClient.subscribe('/topic/chat/read/1', function (message) {
+
+                log('READ: ' + message.body);
+
+            });
+
+            stompClient.subscribe('/topic/chat/typing/1', function (message) {
+
+                console.log('Typing received:', message.body);
+                
+                const event = JSON.parse(message.body);
+
+                if (event.typing) {
+
+                    document.getElementById('typing').innerText =
+                        event.nickname + ' 입력 중...';
+
+                    clearTimeout(window.typingTimer);
+
+                    window.typingTimer =
+                        setTimeout(() => {
+
+                            document.getElementById('typing').innerText = '';
+
+                        }, 3000);
+                }
+            });
+
+            log('Subscribed');
+        }
+
+        function sendMessage() {
+
+            if (!stompClient || !stompClient.connected) {
+                log('먼저 Connect 하세요.');
+                return;
             }
-        });
-    }
 
-    function log(text) {
+            const content =
+                document.getElementById('message').value;
 
-        const chat =
-            document.getElementById('chat');
+            stompClient.send(
+                '/pub/chat/send',
+                {},
+                JSON.stringify({
+                    coupleId: 1,
+                    content: content
+                })
+            );
 
-        chat.innerHTML += '<div>' + text + '</div>';
+            document.getElementById('message').value = '';
+            document.getElementById('typing').innerText = '';
+        }
 
-        chat.scrollTop = chat.scrollHeight;
-    }
+        async function markRead() {
+            await fetch('/api/chat/1/read', {
+                method: 'POST',
+                headers: {
+                    'Authorization':
+                        'Bearer ' + localStorage.getItem('accessToken')
+                }
+            });
+        }
 
-</script>
+        function typing() {
+
+            if (!stompClient || !stompClient.connected) {
+                return;
+            }
+
+            stompClient.send(
+                '/pub/chat/typing',
+                {},
+                JSON.stringify({
+                    coupleId: 1
+                })
+            );
+        }
+
+        function log(text) {
+
+            const chat =
+                document.getElementById('chat');
+
+            chat.innerHTML += '<div>' + text + '</div>';
+
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+    </script>
 
 </body>
+
 </html>

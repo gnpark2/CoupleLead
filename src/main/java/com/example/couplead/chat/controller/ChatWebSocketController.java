@@ -9,13 +9,17 @@ import java.time.LocalDateTime;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 
 import com.example.couplead.chat.dto.request.ChatMessageRequest;
+import com.example.couplead.chat.dto.request.ChatTypingRequest;
 import com.example.couplead.chat.dto.response.ChatMessageResponse;
 import com.example.couplead.event.producer.ChatEventProducer;
+import com.example.couplead.typing.service.TypingService;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/chat")
@@ -23,6 +27,7 @@ public class ChatWebSocketController {
 
     private final ChatEventProducer chatEventProducer;
     private final UserRepository userRepository;
+    private final TypingService typingService;
 
     @MessageMapping("/chat/send")
     public void send(
@@ -49,5 +54,17 @@ public class ChatWebSocketController {
                 );
 
         chatEventProducer.publish(message);
+    }
+
+    @MessageMapping("/chat/typing")
+    public void typing(
+        ChatTypingRequest request,
+        Principal principal
+    ) {
+        Long userId = Long.parseLong(principal.getName());
+
+        User user = userRepository.findById(userId).orElseThrow();
+        log.info("Typing: {}", user.getNickname());
+        typingService.typing(request.coupleId(), userId, user.getNickname());
     }
 }
