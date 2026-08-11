@@ -48,4 +48,22 @@ public class User extends BaseEntity {
     private String city;
 
     private String timezone;
+
+    private Double latitude;
+
+    private Double longitude;
+
+    public void updateLocation(
+        String country,
+        String city,
+        String timezone,
+        Double latitude,
+        Double longitude
+    ) {
+    this.country = country;
+    this.city = city;
+    this.timezone = timezone;
+    this.latitude = latitude;
+    this.longitude = longitude;
+    }
 }

@@ -1,8 +1,21 @@
 package com.example.couplead.widget.dto.response;
 
-public record CoupleWidgetResponse (
-    Long daysTogether,
-    Long nextAnniversary,
-    String updatedAt
+public record CoupleWidgetResponse(
+        Long coupleId,
+        Integer daysTogether,
+        Long anniversaryId,
+        String anniversaryTitle,
+        String anniversaryDate,
+        Integer anniversaryDDay,
+        String partnerNickname,
+        boolean partnerOnline,
+        String partnerLastSeen,
+        String partnerCity,
+        String partnerTimezone,
+        String partnerLocalTime,
+        Double temperature,
+        String weatherCondition,
+        String weatherIcon,
+        String lastMessageAt
 ) {
 }

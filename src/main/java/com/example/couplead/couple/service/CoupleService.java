@@ -1,7 +1,6 @@
 package com.example.couplead.couple.service;
 
 import com.example.couplead.couple.dto.request.ConnectRequest;
-import com.example.couplead.couple.dto.request.UpdateAnniversaryRequest;
 import com.example.couplead.couple.dto.response.CoupleResponse;
 import com.example.couplead.couple.dto.response.InviteCodeResponse;
 
@@ -10,5 +9,4 @@ public interface CoupleService {
     void connect(Long userId, ConnectRequest request);
     CoupleResponse getMyCouple(Long userId);
     void disconnect(Long userId);
-    void updateAnniversary(Long userId, UpdateAnniversaryRequest request);
 }

@@ -94,13 +94,31 @@ Content-Type: application/json
 GET http://localhost:8080/api/couples/me
 Authorization: Bearer {{accessToken}}
 
-### 기념일 수정
-PATCH http://localhost:8080/api/couples/anniversary
+########################################################################
+
+### 기념일 생성
+POST http://localhost:8080/api/anniversaries
 Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "anniversary": "2026-08-04"
+  "title": "두번째 테스트",
+  "type": "BIRTHDAY",
+  "repeatType": "YEARLY",
+  "anniversaryDate": "2023-08-05"
+}
+
+### 기념일 조회
+GET http://localhost:8080/api/anniversaries
+Authorization: Bearer {{accessToken}}
+
+### 기념일 수정
+PATCH http://localhost:8080/api/widgets/anniversary
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "anniversaryId": 2
 }
 
 ### 커플 위젯 조회
@@ -118,3 +136,31 @@ Authorization: Bearer {{accessToken}}
 ### 접속 조회
 GET http://localhost:8080/api/presence/1
 Authorization: Bearer {{accessToken}}
+
+########################################################################
+
+### 내 위치 수정
+PATCH http://localhost:8080/api/users/me/location
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "country": "KR",
+  "city": "Seoul",
+  "timezone": "Asia/Seoul",
+  "latitude": 37.5665,
+  "longitude": 126.9780
+}
+
+### B 위치 수정
+PATCH http://localhost:8080/api/users/me/location
+Authorization: Bearer {{accessTokenB}}
+Content-Type: application/json
+
+{
+  "country": "US",
+  "city": "Arizona",
+  "timezone": "America/Phoenix",
+  "latitude": 33.4484,
+  "longitude": -112.0740
+}

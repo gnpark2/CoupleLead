@@ -9,7 +9,7 @@ public record CoupleResponse(
     String partnerProfileImage,
     String partnerCountry,
     String partnerTimezone,
-    LocalDate anniversary,
+    LocalDate connectedAt,
     Long daysTogether
 ) {
     

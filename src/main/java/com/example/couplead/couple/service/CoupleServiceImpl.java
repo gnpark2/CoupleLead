@@ -16,13 +16,10 @@ import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.domain.CoupleRole;
 import com.example.couplead.couple.domain.CoupleStatus;
 import com.example.couplead.couple.dto.request.ConnectRequest;
-import com.example.couplead.couple.dto.request.UpdateAnniversaryRequest;
 import com.example.couplead.couple.dto.response.CoupleResponse;
 import com.example.couplead.couple.dto.response.InviteCodeResponse;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
 import com.example.couplead.couple.repository.CoupleRepository;
-import com.example.couplead.event.dto.CoupleAnniversaryUpdatedEvent;
-import com.example.couplead.event.producer.CoupleEventProducer;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
 
@@ -38,18 +35,16 @@ public class CoupleServiceImpl implements CoupleService {
     private final CoupleRepository coupleRepository;
     private final UserRepository userRepository;
     private final CoupleMemberRepository coupleMemberRepository;
-    private final CoupleEventProducer coupleEventProducer;
 
     @Override
     public InviteCodeResponse createInviteCode(Long userId) {
         String code = generateCode();
 
         redisTemplate.opsForValue().set(
-            PREFIX + code,
-            String.valueOf(userId),
-            24,
-            TimeUnit.HOURS
-        );
+                PREFIX + code,
+                String.valueOf(userId),
+                24,
+                TimeUnit.HOURS);
 
         return new InviteCodeResponse(code);
     }
@@ -70,36 +65,34 @@ public class CoupleServiceImpl implements CoupleService {
         }
 
         User owner = userRepository.findById(ownerId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
         User partner = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (coupleMemberRepository.existsByUser(owner) || coupleMemberRepository.existsByUser(partner)) {
             throw new CustomException(ErrorCode.ALREADY_IN_COUPLE);
         }
 
         Couple couple = coupleRepository.save(
-            Couple.builder()
-                .status(CoupleStatus.ACTIVE)
-                .build()
-        );
+                Couple.builder()
+                        .connectedAt(LocalDate.now())
+                        .status(CoupleStatus.ACTIVE)
+                        .build());
 
         coupleMemberRepository.save(
-            CoupleMember.builder()
-                .couple(couple)
-                .user(owner)
-                .role(CoupleRole.FIRST)
-                .build()
-        );
+                CoupleMember.builder()
+                        .couple(couple)
+                        .user(owner)
+                        .role(CoupleRole.FIRST)
+                        .build());
 
         coupleMemberRepository.save(
-            CoupleMember.builder()
-                .couple(couple)
-                .user(partner)
-                .role(CoupleRole.SECOND)
-                .build()
-        );
+                CoupleMember.builder()
+                        .couple(couple)
+                        .user(partner)
+                        .role(CoupleRole.SECOND)
+                        .build());
 
         redisTemplate.delete(key);
     }
@@ -108,44 +101,47 @@ public class CoupleServiceImpl implements CoupleService {
     @Transactional(readOnly = true)
     public CoupleResponse getMyCouple(Long userId) {
         User me = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         CoupleMember coupleMember = coupleMemberRepository.findByUser(me)
-            .orElseThrow(() -> new CustomException(ErrorCode.COUPLE_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.COUPLE_NOT_FOUND));
 
         Couple couple = coupleMember.getCouple();
 
         CoupleMember partnerMember = coupleMemberRepository.findByCouple(couple)
-            .stream()
-            .filter(member -> !member.getUser().getId().equals(userId))
-            .findFirst()
-            .orElseThrow(() -> new CustomException(ErrorCode.COUPLE_NOT_FOUND));
+                .stream()
+                .filter(member -> !member.getUser().getId().equals(userId))
+                .findFirst()
+                .orElseThrow(() -> new CustomException(ErrorCode.COUPLE_NOT_FOUND));
 
         User partner = partnerMember.getUser();
 
         Long daysTogether = null;
 
-        if (couple.getAnniversary() != null) {
-            daysTogether = ChronoUnit.DAYS.between(couple.getAnniversary(), LocalDate.now());
+        if (couple.getConnectedAt() != null) {
+
+            daysTogether = ChronoUnit.DAYS.between(
+                    couple.getConnectedAt(),
+                    LocalDate.now());
         }
 
         return new CoupleResponse(
-            couple.getId(),
-            partner.getId(),
-            partner.getNickname(),
-            partner.getProfileImage(),
-            partner.getCountry(),
-            partner.getTimezone(),
-            couple.getAnniversary(),
-            daysTogether
-        );
+                couple.getId(),
+                partner.getId(),
+                partner.getNickname(),
+                partner.getProfileImage(),
+                partner.getCountry(),
+                partner.getTimezone(),
+                couple.getConnectedAt(),
+                daysTogether
+            );
     }
 
     @Override
     public void disconnect(Long userId) {
         throw new UnsupportedOperationException();
     }
-    
+
     private String generateCode() {
         SecureRandom random = new SecureRandom();
         StringBuilder sb = new StringBuilder();
@@ -153,18 +149,5 @@ public class CoupleServiceImpl implements CoupleService {
             sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
         }
         return sb.toString();
-    }
-
-    @Override
-    public void updateAnniversary(Long userId, UpdateAnniversaryRequest request) {
-        User me = userRepository.findById(userId).orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-        CoupleMember myMember = coupleMemberRepository.findByUser(me).orElseThrow(() -> new CustomException(ErrorCode.COUPLE_NOT_FOUND));
-        Couple couple = myMember.getCouple();
-
-        couple.updateAnniversary(request.anniversary());
-
-        coupleEventProducer.publishAnniversaryUpdated(
-            new CoupleAnniversaryUpdatedEvent(couple.getId(), couple.getAnniversary())
-        );
     }
 }

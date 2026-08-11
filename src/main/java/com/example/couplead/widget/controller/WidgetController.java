@@ -6,14 +6,17 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.common.response.ApiResponse;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
+import com.example.couplead.widget.dto.request.SelectWidgetAnniversaryRequest;
 import com.example.couplead.widget.dto.response.CoupleWidgetResponse;
 import com.example.couplead.widget.service.WidgetCacheService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,11 +26,31 @@ public class WidgetController {
     private final CoupleMemberRepository coupleMemberRepository;
 
     @GetMapping("/couple")
-    public ApiResponse<CoupleWidgetResponse> getWidget(@AuthenticationPrincipal CustomUserDetails userDetails) {
-        Long coupleId = coupleMemberRepository.findByUser(userDetails.getUser())
-            .orElseThrow().getCouple().getId();
+    public ApiResponse<CoupleWidgetResponse> getWidget(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        return ApiResponse.success(widgetCacheService.getCache(coupleId));
+        Long coupleId = coupleMemberRepository.findByUser(userDetails.getUser())
+                .orElseThrow()
+                .getCouple()
+                .getId();
+
+        return ApiResponse.success(
+                widgetCacheService.getCache(
+                        coupleId,
+                        userDetails.getUser().getId()));
     }
-    
+
+    @PatchMapping("/anniversary")
+    public ApiResponse<Void> selectAnniversary(
+
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+
+            @Valid @RequestBody SelectWidgetAnniversaryRequest request) {
+
+        widgetCacheService.selectAnniversary(
+                userDetails.getUser().getId(),
+                request.anniversaryId());
+
+        return ApiResponse.success();
+    }
 }

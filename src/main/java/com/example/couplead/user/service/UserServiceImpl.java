@@ -7,6 +7,7 @@ import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.user.domain.Provider;
 import com.example.couplead.user.domain.Role;
 import com.example.couplead.user.domain.User;
+import com.example.couplead.user.dto.request.UpdateLocationRequest;
 import com.example.couplead.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,6 +44,20 @@ public class UserServiceImpl implements UserService {
             savedUser.getId(),
             savedUser.getEmail(),
             savedUser.getNickname()
+        );
+    }
+
+    @Override
+    public void updateLocation(Long userId, UpdateLocationRequest request) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        user.updateLocation(
+            request.country(),
+            request.city(),
+            request.timezone(),
+            request.latitude(),
+            request.longitude()
         );
     }
 }

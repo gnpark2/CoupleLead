@@ -1,10 +1,10 @@
-package com.example.couplead.event.dto;
+// package com.example.couplead.event.dto;
 
-import java.time.LocalDate;
+// import java.time.LocalDate;
 
-public record CoupleAnniversaryUpdatedEvent(
-    Long coupleId,
-    LocalDate anniversary
-) {
+// public record CoupleAnniversaryUpdatedEvent(
+//     Long coupleId,
+//     LocalDate anniversary
+// ) {
 
-}
+// }

@@ -7,10 +7,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class KafkaTopicConfig {
     
-    @Bean
-    NewTopic anniversaryTopic() {
-        return new NewTopic("couple-anniversary-updated", 1, (short) 1);
-    }
+    // @Bean
+    // NewTopic anniversaryTopic() {
+    //     return new NewTopic("couple-anniversary-updated", 1, (short) 1);
+    // }
 
     @Bean
     NewTopic chatTopic() {

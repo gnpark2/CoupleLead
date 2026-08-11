@@ -2,6 +2,7 @@ package com.example.couplead.chat.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,6 +15,7 @@ import com.example.couplead.couple.domain.Couple;
 public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Message> findByCoupleOrderBySentAtAsc(Couple couple);
     List<Message> findTop500ByCoupleOrderBySentAtDesc(Couple couple);
+    Optional<Message> findTopByCoupleIdOrderBySentAtDesc(Long coupleId);
 
     @Modifying
     @Query("""
