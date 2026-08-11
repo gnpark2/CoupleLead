@@ -94,7 +94,7 @@
             stompClient.subscribe('/topic/chat/typing/1', function (message) {
 
                 console.log('Typing received:', message.body);
-                
+
                 const event = JSON.parse(message.body);
 
                 if (event.typing) {
@@ -111,6 +111,15 @@
 
                         }, 3000);
                 }
+            });
+
+            stompClient.subscribe('/topic/presence/1', function (message) {
+
+                    console.log(
+
+                        JSON.parse(message.body)
+
+                    );
             });
 
             log('Subscribed');

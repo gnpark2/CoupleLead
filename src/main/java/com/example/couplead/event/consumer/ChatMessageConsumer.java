@@ -13,6 +13,7 @@ import com.example.couplead.chat.repository.MessageSearchRepository;
 import com.example.couplead.chat.service.ChatCacheService;
 import com.example.couplead.couple.domain.Couple;
 import com.example.couplead.couple.repository.CoupleRepository;
+import com.example.couplead.event.producer.WidgetRefreshProducer;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
 
@@ -29,6 +30,7 @@ public class ChatMessageConsumer {
     private final CoupleRepository coupleRepository;
     private final UserRepository userRepository;
     private final MessageSearchRepository messageSearchRepository;
+    private final WidgetRefreshProducer widgetRefreshProducer;
 
     @KafkaListener(topics = "chat-message", groupId = "chat-group-v3")
     @Transactional
@@ -37,6 +39,7 @@ public class ChatMessageConsumer {
         Couple couple = coupleRepository.findById(message.coupleId()).orElseThrow();
         User sender = userRepository.findById(message.senderId()).orElseThrow();
 
+        // mysql 저장
         Message savedMessage = messageRepository.save(
             Message.builder()
                 .couple(couple)
@@ -46,6 +49,7 @@ public class ChatMessageConsumer {
                 .build()
         );
         
+        // Elasticsearch 색인
         messageSearchRepository.save(
             MessageDocument.builder()
             .id(savedMessage.getId().toString())
@@ -57,8 +61,16 @@ public class ChatMessageConsumer {
             .build()
         );
 
+        // Redis 최근 채팅 캐시
         chatCacheService.save(message);
         
+        // Websocket 실시간 전송
         messagingTemplate.convertAndSend("/topic/chat/" + message.coupleId(), message);
+    
+        // widget 캐시 무효화
+        widgetRefreshProducer.publish(
+            couple.getId(),
+            "CHAT_MESSAGE"
+        );
     }
 }

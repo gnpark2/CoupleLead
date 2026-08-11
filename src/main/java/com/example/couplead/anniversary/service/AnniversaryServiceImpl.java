@@ -11,7 +11,9 @@ import com.example.couplead.anniversary.dto.response.AnniversaryResponse;
 import com.example.couplead.anniversary.repository.AnniversaryRepository;
 import com.example.couplead.couple.domain.Couple;
 import com.example.couplead.couple.domain.CoupleMember;
+import com.example.couplead.anniversary.dto.request.UpdateAnniversaryRequest;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
+import com.example.couplead.event.producer.WidgetRefreshProducer;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
 
@@ -24,6 +26,7 @@ public class AnniversaryServiceImpl implements AnniversaryService {
     private final UserRepository userRepository;
     private final CoupleMemberRepository coupleMemberRepository;
     private final AnniversaryRepository anniversaryRepository;
+    private final WidgetRefreshProducer widgetRefreshProducer;
 
     @Override
     public AnniversaryResponse create(
@@ -40,7 +43,41 @@ public class AnniversaryServiceImpl implements AnniversaryService {
             .repeatType(request.repeatType())
             .build();
 
-        return AnniversaryResponse.from(anniversaryRepository.save(anniversary));
+        Anniversary saved = anniversaryRepository.save(anniversary);
+
+        widgetRefreshProducer.publish(couple.getId(), "ANNIVERSARY_CREATED");
+
+        return AnniversaryResponse.from(saved);
+    }
+
+    @Override
+    public AnniversaryResponse update(
+        Long userId,
+        Long anniversaryId,
+        UpdateAnniversaryRequest request
+    ) {
+        Couple couple = getCouple(userId);
+
+        Anniversary anniversary =
+            anniversaryRepository
+                .findByIdAndCouple(anniversaryId, couple)
+                .orElseThrow();
+
+        anniversary.update(
+            request.title(),
+            request.anniversaryDate(),
+            request.type(),
+            request.repeatType()
+        );
+
+        widgetRefreshProducer.publish(
+            couple.getId(),
+            "ANNIVERSARY_UPDATED"
+        );
+
+        return AnniversaryResponse.from(
+            anniversary
+        );
     }
 
     @Override
@@ -70,6 +107,8 @@ public class AnniversaryServiceImpl implements AnniversaryService {
         ).orElseThrow();
 
         anniversaryRepository.delete(anniversary);
+
+        widgetRefreshProducer.publish(couple.getId(), "ANNIVERSARY_DELETED");
     }
 
     private Couple getCouple(Long userId) {

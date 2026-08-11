@@ -164,22 +164,20 @@ public class WidgetCacheService {
         redisTemplate.delete(PREFIX + userId);
     }
 
-    @Transactional
-    public void refreshCache(Long coupleId) {
-        Couple couple = coupleRepository
-            .findById(coupleId)
+    @Transactional(readOnly = true)
+    public void invalidateByCouple(Long coupleId) {
+        Couple couple = coupleRepository.findById(coupleId)
             .orElseThrow();
 
-        coupleMemberRepository
-            .findByCoupleWithUser(couple)
+        coupleMemberRepository.findByCoupleWithUser(couple)
             .stream()
             .map(CoupleMember::getUser)
-            .forEach(user -> {
-                updateCache(
-                    coupleId,
-                    user.getId()
-                );
-            });
+            .map(User::getId)
+            .forEach(userId -> redisTemplate.delete(PREFIX + userId));
+    }
+
+    public void invalidateByUser(Long userId) {
+        redisTemplate.delete(PREFIX + userId);
     }
 
     private User getPartner(Couple couple, Long myUserId) {
