@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.common.response.ApiResponse;
 import com.example.couplead.user.dto.request.UpdateLocationRequest;
+import com.example.couplead.user.dto.response.UserMeResponse;
 import com.example.couplead.user.service.UserService;
 
 import jakarta.validation.Valid;
@@ -25,10 +26,11 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/me")
-    public ApiResponse<String> me(
+    public ApiResponse<UserMeResponse> me(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ApiResponse.success(
-                userDetails.getUser().getEmail());
+                UserMeResponse.from(userDetails.getUser())
+            );
     }
 
     @PatchMapping("/me/location")
@@ -41,12 +43,12 @@ public class UserController {
         return ApiResponse.success();
     }
 
-    @PostMapping("/me/location-debug")
-    public ApiResponse<Map<String, Object>> debugLocation(
-            @RequestBody Map<String, Object> body) {
-        System.out.println("BODY = " + body);
+    // @PostMapping("/me/location-debug")
+    // public ApiResponse<Map<String, Object>> debugLocation(
+    //         @RequestBody Map<String, Object> body) {
+    //     System.out.println("BODY = " + body);
 
-        return ApiResponse.success(body);
-    }
+    //     return ApiResponse.success(body);
+    // }
 
 }

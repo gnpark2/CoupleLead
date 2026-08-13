@@ -10,6 +10,7 @@ import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
 import com.example.couplead.couple.repository.CoupleRepository;
 import com.example.couplead.presence.service.PresenceService;
+import com.example.couplead.typing.service.TypingService;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
 import com.example.couplead.weather.dto.response.WeatherResponse;
@@ -48,28 +49,35 @@ public class WidgetCacheService {
     private final UserRepository userRepository;
     private final AnniversaryRepository anniversaryRepository;
     private final WidgetPreferenceRepository widgetPreferenceRepository;
+    private final TypingService typingService;
 
     public CoupleWidgetResponse getCache(Long coupleId, Long myUserId) {
 
         HashOperations<String, String, String> hash = redisTemplate.opsForHash();
-        String key = PREFIX + coupleId;
-
+        String key = PREFIX + myUserId;
+        
         if (Boolean.FALSE.equals(redisTemplate.hasKey(key))) {
             updateCache(coupleId, myUserId);
         }
 
         Map<String, String> data = hash.entries(key);
 
+        Long partnerId = parseLong(data.get("partnerId"));
+        boolean partnerTyping = partnerId != null && typingService.isTyping(partnerId);
+
         return new CoupleWidgetResponse(
                 coupleId,
+                partnerId,
                 parseInteger(data.get("daysTogether")),
-                parseLong(data.get("anniversary")),
+                parseLong(data.get("anniversaryId")),
                 data.get("anniversaryTitle"),
                 data.get("anniversaryDate"),
                 parseInteger(data.get("anniversaryDDay")),
                 data.get("partnerNickname"),
                 Boolean.parseBoolean(data.getOrDefault("partnerOnline", "false")),
+                partnerTyping,
                 data.get("partnerLastSeen"),
+                parseLong(data.get("unreadCount")),
                 data.get("partnerCity"),
                 data.get("partnerTimezone"),
                 data.get("partnerLocalTime"),
@@ -85,6 +93,9 @@ public class WidgetCacheService {
         Couple couple = coupleRepository.findById(coupleId).orElseThrow();
         User me = userRepository.findById(myUserId).orElseThrow();
         User partner = getPartner(couple, myUserId);
+
+        Long unreadCount = messageRepository
+            .countByCoupleIdAndSenderIdNotAndReadAtIsNull(coupleId, myUserId);
 
         WidgetPreference preference = widgetPreferenceRepository
                 .findByUser(me)
@@ -120,9 +131,12 @@ public class WidgetCacheService {
         cache.put("anniversaryTitle", anniversaryData.title());
         cache.put("anniversaryDate", anniversaryData.date());
         cache.put("anniversaryDDay", anniversaryData.dDay());
+        cache.put("partnerId", partner.getId().toString());
         cache.put("partnerNickname", value(partner.getNickname()));
         cache.put("partnerOnline", String.valueOf(presenceService.isOnline(partner.getId())));
+        //cache.put("partnerTyping", String.valueOf(partnerTying));
         cache.put("partnerLastSeen", value(presenceService.getLastSeen(partner.getId())));
+        cache.put("unreadCount", String.valueOf(unreadCount));
         cache.put("partnerCity", value(partner.getCity()));
         cache.put("partnerTimezone", value(partner.getTimezone()));
         cache.put("partnerLocalTime", value(getLocalTime(partner.getTimezone())));
@@ -133,7 +147,7 @@ public class WidgetCacheService {
         cache.put("lastMessageAt", value(lastMessageAt));
         cache.put("updatedAt", LocalDateTime.now().toString());
 
-        redisTemplate.opsForHash().putAll(PREFIX + coupleId, cache);
+        redisTemplate.opsForHash().putAll(PREFIX + myUserId, cache);
     }
 
     @Transactional

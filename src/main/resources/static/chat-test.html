@@ -47,6 +47,7 @@
     <button onclick="sendMessage()">Send</button>
     <button onclick="markRead()">Read</button>
     <div id="typing"></div>
+    <button onclick="sendTyping()">Typing 테스트</button>
 
     <div id="chat"></div>
 
@@ -115,11 +116,11 @@
 
             stompClient.subscribe('/topic/presence/1', function (message) {
 
-                    console.log(
+                console.log(
 
-                        JSON.parse(message.body)
+                    JSON.parse(message.body)
 
-                    );
+                );
             });
 
             log('Subscribed');
@@ -181,6 +182,22 @@
             chat.innerHTML += '<div>' + text + '</div>';
 
             chat.scrollTop = chat.scrollHeight;
+        }
+
+        function sendTyping() {
+            if (!stompClient || !stompClient.connected) {
+                console.log('WebSocket이 연결되어 있지 않습니다.');
+                return;
+            }
+
+            stompClient.publish({
+                destination: '/pub/chat/typing',
+                body: JSON.stringify({
+                    coupleId: 1
+                })
+            });
+
+            console.log('Typing 이벤트 전송');
         }
 
     </script>

@@ -21,6 +21,17 @@ Content-Type: application/json
 @accessToken= {{login.response.body.data.accessToken}}
 @refreshToken= {{login.response.body.data.refreshToken}}
 
+### 웹 로그인
+# @name login
+POST http://localhost:8080/api/auth/web/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "12345678"
+}
+
+
 ### 정보 조회
 GET http://localhost:8080/api/users/me
 Authorization: Bearer {{accessToken}}
@@ -164,3 +175,9 @@ Content-Type: application/json
   "latitude": 33.4484,
   "longitude": -112.0740
 }
+
+########################################################################
+
+### Read API 호출
+POST http://localhost:8080/api/chat/1/read
+Authorization: Bearer {{accessToken}}

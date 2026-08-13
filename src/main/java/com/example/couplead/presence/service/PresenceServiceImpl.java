@@ -9,7 +9,9 @@ import com.example.couplead.presence.dto.UserPresenceEvent;
 import com.example.couplead.event.producer.PresenceEventProducer;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PresenceServiceImpl implements PresenceService {
@@ -21,6 +23,8 @@ public class PresenceServiceImpl implements PresenceService {
 
     @Override
     public void connect(Long userId) {
+
+        log.info("Presence CONNECT userId={}", userId);
         redisTemplate.opsForValue().set(ONLINE_PREFIX + userId, "true");
 
         presenceEventProducer.publish(new UserPresenceEvent(userId, true, LocalDateTime.now()));
@@ -28,6 +32,8 @@ public class PresenceServiceImpl implements PresenceService {
 
     @Override
     public void disconnect(Long userId) {
+
+        log.info("Presence DISCONNECT userId={}", userId);
         redisTemplate.delete(ONLINE_PREFIX + userId);
 
         String now = LocalDateTime.now().toString();

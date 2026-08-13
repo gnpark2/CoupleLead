@@ -27,7 +27,7 @@ public class TypingServiceImpl implements TypingService {
         redisTemplate.opsForValue().set(
             PREFIX + userId,
             "true",
-            Duration.ofSeconds(3000)
+            Duration.ofSeconds(3)
         );
 
         chatTypingProducer.publish(

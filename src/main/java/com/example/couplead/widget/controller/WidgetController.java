@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.common.response.ApiResponse;
+import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
 import com.example.couplead.widget.dto.request.SelectWidgetAnniversaryRequest;
 import com.example.couplead.widget.dto.response.CoupleWidgetResponse;
@@ -29,15 +30,19 @@ public class WidgetController {
     public ApiResponse<CoupleWidgetResponse> getWidget(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        Long coupleId = coupleMemberRepository.findByUser(userDetails.getUser())
-                .orElseThrow()
-                .getCouple()
-                .getId();
+        Long myUserId = userDetails.getUser().getId();
 
+        CoupleMember member = coupleMemberRepository
+                .findByUser(userDetails.getUser()).orElseThrow();
+
+        Long coupleId = member.getCouple().getId();
+        
         return ApiResponse.success(
                 widgetCacheService.getCache(
                         coupleId,
-                        userDetails.getUser().getId()));
+                        myUserId
+                )
+        );
     }
 
     @PatchMapping("/anniversary")

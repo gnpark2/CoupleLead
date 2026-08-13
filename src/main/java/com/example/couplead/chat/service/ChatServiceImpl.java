@@ -15,6 +15,7 @@ import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
 import com.example.couplead.event.dto.ChatReadEvent;
 import com.example.couplead.event.producer.ChatReadEventProducer;
+import com.example.couplead.event.producer.WidgetRefreshProducer;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
 
@@ -28,6 +29,7 @@ public class ChatServiceImpl implements ChatService {
     private final CoupleMemberRepository coupleMemberRepository;
     private final MessageRepository messageRepository;
     private final ChatReadEventProducer chatReadEventProducer;
+    private final WidgetRefreshProducer widgetRefreshProducer;
 
     @Override
     public List<ChatHistoryResponse> getMessages(Long userId, Long coupleId) {
@@ -67,6 +69,8 @@ public class ChatServiceImpl implements ChatService {
             chatReadEventProducer.publish(
                 new ChatReadEvent(coupleId, userId, now)
             );
+
+            widgetRefreshProducer.publish(coupleId, "CHAT_READ");
         }
     }
 }

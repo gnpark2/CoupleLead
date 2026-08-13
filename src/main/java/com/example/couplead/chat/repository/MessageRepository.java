@@ -17,11 +17,11 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     List<Message> findTop500ByCoupleOrderBySentAtDesc(Couple couple);
     Optional<Message> findTopByCoupleIdOrderBySentAtDesc(Long coupleId);
 
-    long coucountByCoupleIdAndSenderIdNotAndReadAtIsNull(
+    long countByCoupleIdAndSenderIdNotAndReadAtIsNull(
         Long coupleId,
         Long userId
     );
-    
+
     @Modifying
     @Query("""
         UPDATE Message m
