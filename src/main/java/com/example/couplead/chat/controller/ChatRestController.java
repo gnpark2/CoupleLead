@@ -39,7 +39,7 @@ public class ChatRestController {
 
     @PostMapping("/{coupleId}/read")
     public ApiResponse<Void> markAsRead(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long coupleId) {
-        chatService.markAsRead(userDetails.getUser().getId(), coupleId);
+        chatService.markAsRead(coupleId, userDetails.getUser().getId());
     
         return ApiResponse.success(null);
     }

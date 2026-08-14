@@ -12,27 +12,34 @@ import org.springframework.data.repository.query.Param;
 import com.example.couplead.chat.domain.Message;
 import com.example.couplead.couple.domain.Couple;
 
-public interface MessageRepository extends JpaRepository<Message, Long> {
-    List<Message> findByCoupleOrderBySentAtAsc(Couple couple);
-    List<Message> findTop500ByCoupleOrderBySentAtDesc(Couple couple);
-    Optional<Message> findTopByCoupleIdOrderBySentAtDesc(Long coupleId);
+public interface MessageRepository
+        extends JpaRepository<Message, Long> {
+
+    List<Message> findByCoupleOrderBySentAtAsc(
+            Couple couple);
+
+    List<Message> findTop500ByCoupleOrderBySentAtDesc(
+            Couple couple);
+
+    Optional<Message> findTopByCoupleIdOrderBySentAtDesc(
+            Long coupleId);
 
     long countByCoupleIdAndSenderIdNotAndReadAtIsNull(
-        Long coupleId,
-        Long userId
-    );
+            Long coupleId,
+            Long userId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-        UPDATE Message m
-        SET m.readAt = :readAt
-        WHERE m.couple.id = :coupleId
-          AND m.sender.id <> :readerId
-          AND m.readAt IS NULL
-        """)
+            UPDATE Message m
+               SET m.readAt = :readAt
+             WHERE m.couple.id = :coupleId
+               AND m.sender.id <> :readerId
+               AND m.readAt IS NULL
+            """)
     int markAsRead(
-        @Param("coupleId") Long coupleId,
-        @Param("readerId") Long readerId,
-        @Param("readAt") LocalDateTime readAt
-    );
+            @Param("coupleId") Long coupleId,
+
+            @Param("readerId") Long readerId,
+
+            @Param("readAt") LocalDateTime readAt);
 }

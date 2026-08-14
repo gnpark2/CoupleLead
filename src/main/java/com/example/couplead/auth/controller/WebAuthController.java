@@ -1,5 +1,7 @@
 package com.example.couplead.auth.controller;
 
+import java.time.Duration;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -28,60 +30,83 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/auth/web")
 public class WebAuthController {
 
-    private final AuthService authService;
+        private final AuthService authService;
 
-    private final RefreshTokenCookieUtil refreshTokenCookieUtil;
+        private final RefreshTokenCookieUtil refreshTokenCookieUtil;
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse<WebTokenResponse>> login(
-            @Valid @RequestBody LoginRequest request) {
+        @PostMapping("/login")
+        public ResponseEntity<ApiResponse<WebTokenResponse>> login(@Valid @RequestBody LoginRequest request) {
 
-        LoginResponse tokens = authService.login(request);
+                LoginResponse tokens = authService.login(request);
 
-        ResponseCookie cookie = refreshTokenCookieUtil.create(
-                tokens.refreshToken());
+                ResponseCookie cookie = refreshTokenCookieUtil.create(tokens.refreshToken());
 
-        return ResponseEntity
-                .ok()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        cookie.toString())
-                .body(
-                        ApiResponse.success(
-                                new WebTokenResponse(
-                                        tokens.accessToken())));
-    }
-
-    @PostMapping("/reissue")
-    public ResponseEntity<ApiResponse<WebTokenResponse>> reissue(
-            @CookieValue(name = RefreshTokenCookieUtil.COOKIE_NAME, required = false) String refreshToken) {
-
-        if (refreshToken == null
-                || refreshToken.isBlank()) {
-
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Refresh Token이 없습니다.");
+                return ResponseEntity
+                        .ok()
+                        .header(
+                                HttpHeaders.SET_COOKIE,
+                                cookie.toString())
+                        .body(
+                                ApiResponse.success(
+                                        new WebTokenResponse(
+                                                tokens.accessToken())));
         }
 
-        TokenResponse tokens = authService.reissue(
-                new ReissueRequest(
-                        refreshToken));
+        @PostMapping("/reissue")
+        public ResponseEntity<ApiResponse<WebTokenResponse>> reissue(@CookieValue(name = RefreshTokenCookieUtil.COOKIE_NAME, required = false) String refreshToken) {
 
-        /*
-         * Refresh Token Rotation
-         */
-        ResponseCookie cookie = refreshTokenCookieUtil.create(
-                tokens.refreshToken());
+                if (refreshToken == null || refreshToken.isBlank()) {
+                        throw new ResponseStatusException(
+                                HttpStatus.UNAUTHORIZED,
+                                "Refresh Token이 없습니다."
+                        );
+                }
 
-        return ResponseEntity
-                .ok()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        cookie.toString())
-                .body(
+                TokenResponse tokens = authService.reissue(
+                        new ReissueRequest(
+                                refreshToken));
+
+                /*
+                * Refresh Token Rotation
+                */
+                ResponseCookie cookie = refreshTokenCookieUtil.create(
+                        tokens.refreshToken());
+
+                return ResponseEntity
+                        .ok()
+                        .header(
+                                HttpHeaders.SET_COOKIE,
+                                cookie.toString())
+                        .body(
                         ApiResponse.success(
-                                new WebTokenResponse(
-                                        tokens.accessToken())));
-    }
+                                new WebTokenResponse(tokens.accessToken())));
+        }
+
+        @PostMapping("/logout")
+        public ResponseEntity<ApiResponse<Void>> logout(@CookieValue(value = "refreshToken", required = false) String refreshToken) {
+
+                if (refreshToken != null && !refreshToken.isBlank()) {
+
+                        authService.logout(refreshToken);
+                }
+
+                ResponseCookie expiredCookie = ResponseCookie
+                        .from(
+                                "refreshToken",
+                                "")
+                        .httpOnly(true)
+                        .secure(false)
+                        .sameSite("Lax")
+                        .path("/api/auth/web")
+                        .maxAge(Duration.ZERO)
+                        .build();
+
+                return ResponseEntity
+                        .ok()
+                        .header(
+                                HttpHeaders.SET_COOKIE,
+                                expiredCookie.toString())
+                        .body(
+                                ApiResponse.success());
+        }
 }

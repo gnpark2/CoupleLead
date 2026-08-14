@@ -20,6 +20,8 @@ import com.example.couplead.widget.dto.response.CoupleWidgetResponse;
 import com.example.couplead.widget.repository.WidgetPreferenceRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -51,11 +54,12 @@ public class WidgetCacheService {
     private final WidgetPreferenceRepository widgetPreferenceRepository;
     private final TypingService typingService;
 
+    @Transactional(readOnly = true)
     public CoupleWidgetResponse getCache(Long coupleId, Long myUserId) {
 
         HashOperations<String, String, String> hash = redisTemplate.opsForHash();
         String key = PREFIX + myUserId;
-        
+
         if (Boolean.FALSE.equals(redisTemplate.hasKey(key))) {
             updateCache(coupleId, myUserId);
         }
@@ -64,6 +68,13 @@ public class WidgetCacheService {
 
         Long partnerId = parseLong(data.get("partnerId"));
         boolean partnerTyping = partnerId != null && typingService.isTyping(partnerId);
+        long unreadCount = messageRepository.countByCoupleIdAndSenderIdNotAndReadAtIsNull(coupleId, myUserId);
+
+        log.info(
+                "Widget unreadCount: userId={}, coupleId={}, count={}",
+                myUserId,
+                coupleId,
+                unreadCount);
 
         return new CoupleWidgetResponse(
                 coupleId,
@@ -77,15 +88,14 @@ public class WidgetCacheService {
                 Boolean.parseBoolean(data.getOrDefault("partnerOnline", "false")),
                 partnerTyping,
                 data.get("partnerLastSeen"),
-                parseLong(data.get("unreadCount")),
+                unreadCount,
                 data.get("partnerCity"),
                 data.get("partnerTimezone"),
                 data.get("partnerLocalTime"),
                 parseDouble(data.get("temperature")),
                 data.get("weatherCondition"),
                 data.get("weatherIcon"),
-                data.get("lastMessageAt")
-            );
+                data.get("lastMessageAt"));
     }
 
     @Transactional
@@ -94,8 +104,8 @@ public class WidgetCacheService {
         User me = userRepository.findById(myUserId).orElseThrow();
         User partner = getPartner(couple, myUserId);
 
-        Long unreadCount = messageRepository
-            .countByCoupleIdAndSenderIdNotAndReadAtIsNull(coupleId, myUserId);
+        // Long unreadCount = messageRepository
+        // .countByCoupleIdAndSenderIdNotAndReadAtIsNull(coupleId, myUserId);
 
         WidgetPreference preference = widgetPreferenceRepository
                 .findByUser(me)
@@ -113,8 +123,7 @@ public class WidgetCacheService {
 
         WeatherResponse weather = weatherService.getCurrentWeather(
                 partner.getLatitude(),
-                partner.getLongitude()
-            );
+                partner.getLongitude());
 
         Message lastMessage = messageRepository
                 .findTopByCoupleIdOrderBySentAtDesc(coupleId)
@@ -134,9 +143,9 @@ public class WidgetCacheService {
         cache.put("partnerId", partner.getId().toString());
         cache.put("partnerNickname", value(partner.getNickname()));
         cache.put("partnerOnline", String.valueOf(presenceService.isOnline(partner.getId())));
-        //cache.put("partnerTyping", String.valueOf(partnerTying));
+        // cache.put("partnerTyping", String.valueOf(partnerTying));
         cache.put("partnerLastSeen", value(presenceService.getLastSeen(partner.getId())));
-        cache.put("unreadCount", String.valueOf(unreadCount));
+        // cache.put("unreadCount", String.valueOf(unreadCount));
         cache.put("partnerCity", value(partner.getCity()));
         cache.put("partnerTimezone", value(partner.getTimezone()));
         cache.put("partnerLocalTime", value(getLocalTime(partner.getTimezone())));
@@ -152,9 +161,8 @@ public class WidgetCacheService {
 
     @Transactional
     public void selectAnniversary(
-        Long userId,
-        Long anniversaryId
-    ) {
+            Long userId,
+            Long anniversaryId) {
         User user = userRepository.findById(userId).orElseThrow();
 
         CoupleMember member = coupleMemberRepository.findByUser(user).orElseThrow();
@@ -163,8 +171,7 @@ public class WidgetCacheService {
 
         Anniversary anniversary = anniversaryRepository.findByIdAndCouple(
                 anniversaryId,
-                couple
-            ).orElseThrow();
+                couple).orElseThrow();
 
         WidgetPreference preference = widgetPreferenceRepository
                 .findByUser(user)
@@ -181,13 +188,13 @@ public class WidgetCacheService {
     @Transactional(readOnly = true)
     public void invalidateByCouple(Long coupleId) {
         Couple couple = coupleRepository.findById(coupleId)
-            .orElseThrow();
+                .orElseThrow();
 
         coupleMemberRepository.findByCoupleWithUser(couple)
-            .stream()
-            .map(CoupleMember::getUser)
-            .map(User::getId)
-            .forEach(userId -> redisTemplate.delete(PREFIX + userId));
+                .stream()
+                .map(CoupleMember::getUser)
+                .map(User::getId)
+                .forEach(userId -> redisTemplate.delete(PREFIX + userId));
     }
 
     public void invalidateByUser(Long userId) {
@@ -211,19 +218,17 @@ public class WidgetCacheService {
         }
 
         return ChronoUnit.DAYS.between(
-            couple.getConnectedAt(),
-            LocalDate.now()
-        );
+                couple.getConnectedAt(),
+                LocalDate.now());
     }
 
     private AnniversaryWidgetData calculateAnniversary(Anniversary anniversary) {
         if (anniversary == null) {
             return new AnniversaryWidgetData(
-                "",
-                "",
-                "",
-                ""
-            );
+                    "",
+                    "",
+                    "",
+                    "");
         }
 
         LocalDate date = anniversary.getAnniversaryDate();
@@ -243,16 +248,15 @@ public class WidgetCacheService {
         }
 
         return new AnniversaryWidgetData(
-            anniversary
-                .getId()
-                .toString(),
+                anniversary
+                        .getId()
+                        .toString(),
 
-            value(anniversary.getTitle()),
+                value(anniversary.getTitle()),
 
-            date.toString(),
+                date.toString(),
 
-            String.valueOf(dDay)
-        );
+                String.valueOf(dDay));
     }
 
     private String getLocalTime(String timezone) {
@@ -296,11 +300,10 @@ public class WidgetCacheService {
     }
 
     private record AnniversaryWidgetData(
-        String id,
-        String title,
-        String date,
-        String dDay
-    ) {
+            String id,
+            String title,
+            String date,
+            String dDay) {
 
     }
 }
