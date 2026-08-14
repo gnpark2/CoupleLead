@@ -1,17 +1,15 @@
 package com.example.couplead.chat.service;
 
-import java.util.List;
-
-import com.example.couplead.chat.dto.response.ChatHistoryResponse;
+import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 
 public interface ChatService {
-    List<ChatHistoryResponse> getMessages(
-        Long userId,
-        Long coupleId
-    );
+    ChatHistoryPageResponse getMessages(
+            Long userId,
+            Long coupleId,
+            Long beforeMessageId,
+            int size);
 
     void markAsRead(
-        Long userId,
-        Long coupleId
-    );
+            Long userId,
+            Long coupleId);
 }

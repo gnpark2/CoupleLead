@@ -6,7 +6,9 @@ import java.util.List;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.chat.document.MessageDocument;
 import com.example.couplead.chat.dto.response.ChatHistoryResponse;
@@ -17,8 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -28,19 +28,26 @@ public class ChatRestController {
     private final ChatService chatService;
 
     @GetMapping("/{coupleId}")
-    public ApiResponse<List<ChatHistoryResponse>> getMessages(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long coupleId) {
-        return ApiResponse.success(
-            chatService.getMessages(
+    public ApiResponse<ChatHistoryPageResponse> getMessages(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable Long coupleId,
+        @RequestParam(required = false) Long beforeMessageId,
+        @RequestParam(defaultValue = "50") int size) {
+            ChatHistoryPageResponse response = chatService.getMessages(
                 userDetails.getUser().getId(),
-                coupleId
-            )
-        );
+                coupleId,
+                beforeMessageId,
+                size
+            );
+
+        return ApiResponse.success(response);
     }
 
     @PostMapping("/{coupleId}/read")
-    public ApiResponse<Void> markAsRead(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long coupleId) {
+    public ApiResponse<Void> markAsRead(@AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long coupleId) {
         chatService.markAsRead(coupleId, userDetails.getUser().getId());
-    
+
         return ApiResponse.success(null);
     }
 

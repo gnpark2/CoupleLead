@@ -181,3 +181,19 @@ Content-Type: application/json
 ### Read API 호출
 POST http://localhost:8080/api/chat/1/read
 Authorization: Bearer {{accessToken}}
+
+########################################################################
+
+### 채팅 페이지네이션 최근 10개
+# @name chat
+GET http://localhost:8080/api/chat/1?size=10
+Authorization: Bearer {{accessToken}}
+
+@nextCursor = {{chat.response.body.data.nextCursor}}
+
+### 채팅 페이지네이션 이전 10개
+# @name chat
+GET http://localhost:8080/api/chat/1?beforeMessageId={{nextCursor}}&size=10
+Authorization: Bearer {{accessToken}}
+
+@nextCursor = {{chat.response.body.data.nextCursor}}
