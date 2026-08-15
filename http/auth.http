@@ -197,3 +197,14 @@ GET http://localhost:8080/api/chat/1?beforeMessageId={{nextCursor}}&size=10
 Authorization: Bearer {{accessToken}}
 
 @nextCursor = {{chat.response.body.data.nextCursor}}
+
+########################################################################
+
+### 닉네임 변경
+PATCH http://localhost:8080/api/users/me/profile
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "nickname": "Lee"
+}

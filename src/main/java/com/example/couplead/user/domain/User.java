@@ -10,13 +10,10 @@ import lombok.*;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(
-    name = "users",
-    uniqueConstraints = {
+@Table(name = "users", uniqueConstraints = {
         @UniqueConstraint(name = "uk_user_email", columnNames = "email"),
         @UniqueConstraint(name = "uk_user_nickname", columnNames = "nickname")
-    }
-)
+})
 public class User extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,16 +51,25 @@ public class User extends BaseEntity {
     private Double longitude;
 
     public void updateLocation(
-        String country,
-        String city,
-        String timezone,
-        Double latitude,
-        Double longitude
-    ) {
-    this.country = country;
-    this.city = city;
-    this.timezone = timezone;
-    this.latitude = latitude;
-    this.longitude = longitude;
+            String country,
+            String city,
+            String timezone,
+            Double latitude,
+            Double longitude) {
+        this.country = country;
+        this.city = city;
+        this.timezone = timezone;
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
+    public void updateNickname(
+            String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updateProfileImage(
+            String profileImage) {
+        this.profileImage = profileImage;
     }
 }

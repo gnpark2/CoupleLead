@@ -8,6 +8,8 @@ import com.example.couplead.user.domain.Provider;
 import com.example.couplead.user.domain.Role;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.dto.request.UpdateLocationRequest;
+import com.example.couplead.user.dto.request.UpdateProfileRequest;
+import com.example.couplead.user.dto.response.UserProfileResponse;
 import com.example.couplead.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -26,9 +28,6 @@ public class UserServiceImpl implements UserService {
         if (userRepository.existsByEmail(request.email())) {
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
-        if (userRepository.existsByNickname(request.nickname())) {
-            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
-        }
 
         User user = User.builder()
                 .email(request.email())
@@ -41,23 +40,63 @@ public class UserServiceImpl implements UserService {
         User savedUser = userRepository.save(user);
 
         return new SignupResponse(
-            savedUser.getId(),
-            savedUser.getEmail(),
-            savedUser.getNickname()
-        );
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getNickname());
+    }
+
+    @Override
+    @Transactional
+    public UserProfileResponse updateProfile(
+            Long userId,
+            UpdateProfileRequest request) {
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.USER_NOT_FOUND));
+
+        user.updateNickname(
+                request.nickname());
+
+        return new UserProfileResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getNickname(),
+                user.getProfileImage());
+    }
+
+    @Override
+    @Transactional
+    public UserProfileResponse updateProfileImage(
+            Long userId,
+            String profileImage) {
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.USER_NOT_FOUND));
+
+        user.updateProfileImage(
+                profileImage);
+
+        return new UserProfileResponse(
+                user.getId(),
+                user.getEmail(),
+                user.getNickname(),
+                user.getProfileImage());
     }
 
     @Override
     public void updateLocation(Long userId, UpdateLocationRequest request) {
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         user.updateLocation(
-            request.country(),
-            request.city(),
-            request.timezone(),
-            request.latitude(),
-            request.longitude()
-        );
+                request.country(),
+                request.city(),
+                request.timezone(),
+                request.latitude(),
+                request.longitude());
     }
 }

@@ -38,6 +38,7 @@ public class SecurityConfig {
                         "/api/test/**",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
+                        "/uploads/**",
                         // jwt websocket 구현 전까지 임시 허용
                         "/ws",
                         "/ws/**",
