@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### static image ###
+/uploads/profile/
+
 # Created by https://www.toptal.com/developers/gitignore/api/windows,macos,visualstudiocode,java,gradle,flutter
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,macos,visualstudiocode,java,gradle,flutter
 
