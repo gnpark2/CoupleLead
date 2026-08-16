@@ -49,6 +49,7 @@ public class ChatWebSocketController {
                         request.coupleId(),
                         user.getId(),
                         user.getNickname(),
+                        request.type(),
                         request.content(),
                         LocalDateTime.now()
                 );

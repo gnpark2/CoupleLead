@@ -136,6 +136,7 @@ public class ChatServiceImpl implements ChatService {
                                         .getId(),
                                 message.getSender()
                                         .getNickname(),
+                                message.getType(),
                                 message.getContent(),
                                 message.getSentAt(),
                                 message.getReadAt()))

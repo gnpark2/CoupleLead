@@ -7,6 +7,8 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 
+import com.example.couplead.chat.domain.MessageType;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -29,6 +31,9 @@ public class MessageDocument {
 
     @Field(type = FieldType.Keyword)
     private String senderNickname;
+
+    @Field(type = FieldType.Keyword)
+    private MessageType type;
 
     @Field(type = FieldType.Text, analyzer = "standard")
     private String content;

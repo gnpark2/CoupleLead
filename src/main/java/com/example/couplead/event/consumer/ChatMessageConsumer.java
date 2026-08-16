@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.couplead.chat.document.MessageDocument;
 import com.example.couplead.chat.domain.Message;
+import com.example.couplead.chat.domain.MessageType;
 import com.example.couplead.chat.dto.response.ChatMessageResponse;
 import com.example.couplead.chat.repository.MessageRepository;
 import com.example.couplead.chat.repository.MessageSearchRepository;
@@ -43,9 +44,15 @@ public class ChatMessageConsumer {
                 Message.builder()
                         .couple(couple)
                         .sender(sender)
+                        .type(
+                                message.type() == null
+                                        ? MessageType.TEXT
+                                        : message.type()
+                        )
                         .content(message.content())
                         .sentAt(message.sentAt())
-                        .build());
+                        .build()
+);
 
         // Elasticsearch 색인
         messageSearchRepository.save(
