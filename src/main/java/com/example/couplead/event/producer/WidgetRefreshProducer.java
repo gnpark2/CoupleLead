@@ -13,19 +13,20 @@ public class WidgetRefreshProducer {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public void publish(
-        Long coupleId,
-        String reason
-    ) {
-        WidgetRefreshEvent event =
-            new WidgetRefreshEvent(
+            Long coupleId,
+            String reason) {
+        System.out.println(
+                "[WIDGET REFRESH PRODUCER] coupleId="
+                        + coupleId
+                        + ", reason="
+                        + reason);
+        WidgetRefreshEvent event = new WidgetRefreshEvent(
                 coupleId,
-                reason
-            );
+                reason);
 
-            kafkaTemplate.send(
+        kafkaTemplate.send(
                 "widget-refresh",
                 String.valueOf(coupleId),
-                event
-            );
+                event);
     }
 }

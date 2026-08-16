@@ -85,6 +85,7 @@ public class WidgetCacheService {
                 data.get("anniversaryDate"),
                 parseInteger(data.get("anniversaryDDay")),
                 data.get("partnerNickname"),
+                data.get("partnerProfileImage"),
                 Boolean.parseBoolean(data.getOrDefault("partnerOnline", "false")),
                 partnerTyping,
                 data.get("partnerLastSeen"),
@@ -142,6 +143,7 @@ public class WidgetCacheService {
         cache.put("anniversaryDDay", anniversaryData.dDay());
         cache.put("partnerId", partner.getId().toString());
         cache.put("partnerNickname", value(partner.getNickname()));
+        cache.put("partnerProfileImage", partner.getProfileImage() != null ? partner.getProfileImage() : "");
         cache.put("partnerOnline", String.valueOf(presenceService.isOnline(partner.getId())));
         // cache.put("partnerTyping", String.valueOf(partnerTying));
         cache.put("partnerLastSeen", value(presenceService.getLastSeen(partner.getId())));

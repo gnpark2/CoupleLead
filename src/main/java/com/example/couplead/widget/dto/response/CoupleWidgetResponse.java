@@ -13,6 +13,7 @@ public record CoupleWidgetResponse(
         Integer anniversaryDDay,
 
         String partnerNickname,
+        String partnerProfileImage,
 
         boolean partnerOnline,
         boolean partnerTyping,
