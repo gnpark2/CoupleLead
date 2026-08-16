@@ -72,4 +72,8 @@ public class User extends BaseEntity {
             String profileImage) {
         this.profileImage = profileImage;
     }
+
+    public void removeProfileImage() {
+        this.profileImage = null;
+    }
 }

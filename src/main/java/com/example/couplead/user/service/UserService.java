@@ -7,15 +7,18 @@ import com.example.couplead.user.dto.request.UpdateProfileRequest;
 import com.example.couplead.user.dto.response.UserProfileResponse;
 
 public interface UserService {
-    SignupResponse signup(SignupRequest request);
+        SignupResponse signup(SignupRequest request);
 
-    void updateLocation(Long userId, UpdateLocationRequest request);
+        UserProfileResponse updateProfile(
+                        Long userId,
+                        UpdateProfileRequest request);
 
-    UserProfileResponse updateProfile(
-            Long userId,
-            UpdateProfileRequest request);
+        UserProfileResponse updateProfileImage(
+                        Long userId,
+                        String profileImage);
 
-    UserProfileResponse updateProfileImage(
-            Long userId,
-            String profileImage);
+        void deleteProfileImage(
+                        Long userId);
+
+        void updateLocation(Long userId, UpdateLocationRequest request);
 }
