@@ -32,58 +32,68 @@ public class ChatMessageConsumer {
         private final MessageSearchRepository messageSearchRepository;
         private final ApplicationEventPublisher eventPublisher;
 
-    @KafkaListener(topics = "chat-message", groupId = "chat-group-v3")
-    @Transactional
-    public void consume(ChatMessageResponse message) {
+        @KafkaListener(topics = "chat-message", groupId = "chat-group-v3")
+        @Transactional
+        public void consume(ChatMessageResponse message) {
 
-        Couple couple = coupleRepository.findById(message.coupleId()).orElseThrow();
-        User sender = userRepository.findById(message.senderId()).orElseThrow();
+                Couple couple = coupleRepository.findById(message.coupleId()).orElseThrow();
+                User sender = userRepository.findById(message.senderId()).orElseThrow();
 
-        // mysql 저장
-        Message savedMessage = messageRepository.save(
-                Message.builder()
-                        .couple(couple)
-                        .sender(sender)
-                        .type(
-                                message.type() == null
-                                        ? MessageType.TEXT
-                                        : message.type()
-                        )
-                        .content(message.content())
-                        .sentAt(message.sentAt())
-                        .deleted(false)
-                        .build()
-);
+                Message replyToMessage = null;
 
-        // Elasticsearch 색인
-        messageSearchRepository.save(
-                MessageDocument.builder()
-                        .id(savedMessage.getId().toString())
-                        .coupleId(couple.getId())
-                        .senderId(sender.getId())
-                        .senderNickname(sender.getNickname())
-                        .type(savedMessage.getType())
-                        .content(savedMessage.getContent())
-                        .sentAt(savedMessage.getSentAt())
-                        .build()
-        );
+                if (message.replyToMessageId() != null) {
 
-        // Redis 최근 채팅 캐시
-        chatCacheService.save(message);
+                        replyToMessage = messageRepository
+                                        .findById(
+                                                        message
+                                                                        .replyToMessageId())
+                                        .orElse(null);
+                }
 
-        // Websocket 실시간 전송
-        // messagingTemplate.convertAndSend("/topic/chat/" + message.coupleId(),
-        // message);
+                // mysql 저장
+                Message savedMessage = messageRepository.save(
+                                Message.builder()
+                                                .couple(couple)
+                                                .sender(sender)
+                                                .type(
+                                                                message.type() == null
+                                                                                ? MessageType.TEXT
+                                                                                : message.type())
+                                                .content(message.content())
+                                                .sentAt(message.sentAt())
+                                                .deleted(false)
+                                                .replyToMessage(replyToMessage)
+                                                .deleted(false)
+                                                .build());
 
-        // widget 캐시 무효화
-        // widgetRefreshProducer.publish(
-        // couple.getId(),
-        // "CHAT_MESSAGE"
-        // );
+                // Elasticsearch 색인
+                messageSearchRepository.save(
+                                MessageDocument.builder()
+                                                .id(savedMessage.getId().toString())
+                                                .coupleId(couple.getId())
+                                                .senderId(sender.getId())
+                                                .senderNickname(sender.getNickname())
+                                                .type(savedMessage.getType())
+                                                .content(savedMessage.getContent())
+                                                .sentAt(savedMessage.getSentAt())
+                                                .build());
 
-        eventPublisher.publishEvent(
-                new ChatMessageCommittedEvent(
-                        couple.getId(),
-                        message));
-    }
+                // Redis 최근 채팅 캐시
+                chatCacheService.save(message);
+
+                // Websocket 실시간 전송
+                // messagingTemplate.convertAndSend("/topic/chat/" + message.coupleId(),
+                // message);
+
+                // widget 캐시 무효화
+                // widgetRefreshProducer.publish(
+                // couple.getId(),
+                // "CHAT_MESSAGE"
+                // );
+
+                eventPublisher.publishEvent(
+                                new ChatMessageCommittedEvent(
+                                                couple.getId(),
+                                                message));
+        }
 }

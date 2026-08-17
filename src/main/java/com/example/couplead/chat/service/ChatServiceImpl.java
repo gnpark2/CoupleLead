@@ -75,6 +75,7 @@ public class ChatServiceImpl implements ChatService {
         }
 
         @Override
+        @Transactional(readOnly = true)
         public ChatHistoryPageResponse getMessages(
                         Long userId,
                         Long coupleId,
@@ -163,19 +164,40 @@ public class ChatServiceImpl implements ChatService {
 
                 List<ChatHistoryResponse> messages = pageMessages
                                 .stream()
-                                .map(
-                                                message -> new ChatHistoryResponse(
-                                                                message.getId(),
-                                                                message.getSender()
-                                                                                .getId(),
-                                                                message.getSender()
-                                                                                .getNickname(),
-                                                                message.getType(),
-                                                                message.getContent(),
-                                                                message.getSentAt(),
-                                                                message.getReadAt(),
-                                                                message.isDeleted(),
-                                                                message.getDeletedAt()))
+                                .map(message -> {
+
+                                        Message reply = message.getReplyToMessage();
+
+                                        return new ChatHistoryResponse(
+                                                        message.getId(),
+                                                        message.getSender().getId(),
+                                                        message.getSender().getNickname(),
+                                                        message.getType(),
+                                                        message.getContent(),
+                                                        message.getSentAt(),
+                                                        message.getReadAt(),
+                                                        message.isDeleted(),
+                                                        message.getDeletedAt(),
+
+                                                        reply == null
+                                                                        ? null
+                                                                        : reply.getId(),
+
+                                                        reply == null
+                                                                        ? null
+                                                                        : reply.getSender()
+                                                                                        .getNickname(),
+
+                                                        reply == null
+                                                                        ? null
+                                                                        : reply.getType(),
+
+                                                        reply == null
+                                                                        ? null
+                                                                        : reply.isDeleted()
+                                                                                        ? "삭제된 메시지입니다."
+                                                                                        : reply.getContent());
+                                })
                                 .toList();
 
                 // 현재 페이지의 가장 오래된 메시지 ID.
