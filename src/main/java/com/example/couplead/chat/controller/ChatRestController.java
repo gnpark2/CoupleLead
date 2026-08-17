@@ -20,6 +20,8 @@ import com.example.couplead.chat.service.ChatService;
 import com.example.couplead.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -68,5 +70,17 @@ public class ChatRestController {
         return ApiResponse.success(
                 new ChatImageUploadResponse(
                         imageUrl));
+    }
+
+    @DeleteMapping("/messages/{messageId}")
+    public ApiResponse<Void> deleteMessage(
+            @PathVariable Long messageId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        chatService.deleteMessage(
+                userDetails.getUser().getId(),
+                messageId);
+
+        return ApiResponse.success(
+                null);
     }
 }

@@ -15,10 +15,11 @@ import lombok.RequiredArgsConstructor;
 public class ChatCacheService {
     private static final String PREFIX = "chat:";
     private final RedisTemplate<String, String> redisTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule()).disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
     public void save(ChatMessageResponse message) {
-        
+
         try {
             String json = objectMapper.writeValueAsString(message);
             String key = PREFIX + message.coupleId();
@@ -28,5 +29,13 @@ public class ChatCacheService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void invalidate(
+            Long coupleId) {
+        String key = PREFIX + coupleId;
+
+        redisTemplate.delete(
+                key);
     }
 }

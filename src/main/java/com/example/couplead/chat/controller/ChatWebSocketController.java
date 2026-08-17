@@ -51,7 +51,9 @@ public class ChatWebSocketController {
                         user.getNickname(),
                         request.type(),
                         request.content(),
-                        LocalDateTime.now()
+                        LocalDateTime.now(),
+                        false,
+                        null
                 );
 
         chatEventProducer.publish(message);

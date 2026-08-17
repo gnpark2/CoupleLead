@@ -13,6 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.couplead.common.exception.CustomException;
 import com.example.couplead.common.exception.ErrorCode;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class ChatImageStorageService {
 
@@ -83,5 +86,58 @@ public class ChatImageStorageService {
                 .substring(
                         filename.lastIndexOf('.') + 1)
                 .toLowerCase();
+    }
+
+    public void delete(
+            String imagePath) {
+        if (imagePath == null ||
+                imagePath.isBlank()) {
+            return;
+        }
+
+        /*
+         * 외부 이미지 URL은
+         * 로컬 파일이 아니므로 제외
+         */
+        if (imagePath.startsWith("http://") ||
+                imagePath.startsWith("https://")) {
+            return;
+        }
+
+        String filename = imagePath.substring(
+                imagePath.lastIndexOf('/') + 1);
+
+        Path target = CHAT_DIRECTORY
+                .resolve(filename)
+                .normalize();
+
+        /*
+         * uploads/chat 밖의 파일을
+         * 지우지 못하도록 보호
+         */
+        if (!target.startsWith(
+                CHAT_DIRECTORY.normalize())) {
+            log.warn(
+                    "잘못된 채팅 이미지 경로: {}",
+                    imagePath);
+
+            return;
+        }
+
+        try {
+            boolean deleted = Files.deleteIfExists(
+                    target);
+
+            if (deleted) {
+                log.info(
+                        "채팅 이미지 삭제: {}",
+                        target);
+            }
+        } catch (IOException e) {
+            log.warn(
+                    "채팅 이미지 삭제 실패: {}",
+                    target,
+                    e);
+        }
     }
 }

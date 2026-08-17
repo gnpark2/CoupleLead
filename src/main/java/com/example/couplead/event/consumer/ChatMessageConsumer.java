@@ -25,12 +25,12 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class ChatMessageConsumer {
-    private final ChatCacheService chatCacheService;
-    private final MessageRepository messageRepository;
-    private final CoupleRepository coupleRepository;
-    private final UserRepository userRepository;
-    private final MessageSearchRepository messageSearchRepository;
-    private final ApplicationEventPublisher eventPublisher;
+        private final ChatCacheService chatCacheService;
+        private final MessageRepository messageRepository;
+        private final CoupleRepository coupleRepository;
+        private final UserRepository userRepository;
+        private final MessageSearchRepository messageSearchRepository;
+        private final ApplicationEventPublisher eventPublisher;
 
     @KafkaListener(topics = "chat-message", groupId = "chat-group-v3")
     @Transactional
@@ -51,6 +51,7 @@ public class ChatMessageConsumer {
                         )
                         .content(message.content())
                         .sentAt(message.sentAt())
+                        .deleted(false)
                         .build()
 );
 
@@ -61,9 +62,11 @@ public class ChatMessageConsumer {
                         .coupleId(couple.getId())
                         .senderId(sender.getId())
                         .senderNickname(sender.getNickname())
+                        .type(savedMessage.getType())
                         .content(savedMessage.getContent())
                         .sentAt(savedMessage.getSentAt())
-                        .build());
+                        .build()
+        );
 
         // Redis 최근 채팅 캐시
         chatCacheService.save(message);

@@ -10,7 +10,9 @@ public record ChatMessageResponse(
     String senderNickname,
     MessageType type,
     String content,
-    LocalDateTime sentAt
+    LocalDateTime sentAt,
+    boolean deleted,
+    LocalDateTime deletedAt
 ) {
     
 }

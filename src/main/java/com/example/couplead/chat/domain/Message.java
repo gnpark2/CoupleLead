@@ -52,11 +52,23 @@ public class Message extends BaseEntity {
     private MessageType type = MessageType.TEXT;
 
     @Column(nullable = false)
+    @Builder.Default
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
+
+    @Column(nullable = false)
     private LocalDateTime sentAt;
 
     private LocalDateTime readAt;
 
     public void markAsRead(LocalDateTime readAt) {
         this.readAt = readAt;
+    }
+
+    public void deleteForEveryone() {
+        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
+        this.content = "";
     }
 }

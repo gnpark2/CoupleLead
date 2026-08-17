@@ -11,7 +11,9 @@ public record ChatHistoryResponse(
     MessageType type,
     String content,
     LocalDateTime sentAt,
-    LocalDateTime readAt
+    LocalDateTime readAt,
+    boolean deleted,
+    LocalDateTime deletedAt
 ) {
     
 }

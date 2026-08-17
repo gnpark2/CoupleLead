@@ -208,3 +208,6 @@ Content-Type: application/json
 {
   "nickname": "Lee"
 }
+
+### 이미지 업로드 테스트
+POST http://
