@@ -4,24 +4,30 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 
+import com.example.couplead.chat.domain.ChatAnnouncement;
 import com.example.couplead.chat.domain.Message;
 import com.example.couplead.chat.domain.MessageType;
+import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryResponse;
+import com.example.couplead.chat.event.ChatAnnouncementChangedEvent;
 import com.example.couplead.chat.event.ChatMessageDeletedEvent;
 import com.example.couplead.chat.event.ChatReadCommittedEvent;
+import com.example.couplead.chat.repository.ChatAnnouncementRepository;
 import com.example.couplead.chat.repository.MessageRepository;
 import com.example.couplead.common.exception.CustomException;
 import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.couple.domain.Couple;
 import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
+import com.example.couplead.couple.repository.CoupleRepository;
 import com.example.couplead.event.dto.ChatReadEvent;
 import com.example.couplead.event.producer.WidgetRefreshProducer;
 import com.example.couplead.user.domain.User;
@@ -40,6 +46,33 @@ public class ChatServiceImpl implements ChatService {
         private final CoupleMemberRepository coupleMemberRepository;
         private final MessageRepository messageRepository;
         private final ApplicationEventPublisher eventPublisher;
+        private final ChatAnnouncementRepository chatAnnouncementRepository;
+        private final CoupleRepository coupleRepository;
+
+        private ChatAnnouncementResponse toAnnouncementResponse(
+                        ChatAnnouncement announcement) {
+                return new ChatAnnouncementResponse(
+                                announcement.getId(),
+                                announcement.getMessage().getId(),
+
+                                announcement.getCreatedBy().getId(),
+                                announcement.getCreatedBy().getNickname(),
+
+                                announcement.getMessage()
+                                                .getSender()
+                                                .getId(),
+
+                                announcement.getMessage()
+                                                .getSender()
+                                                .getNickname(),
+
+                                announcement.getContent(),
+
+                                announcement.getMessage()
+                                                .getSentAt(),
+
+                                announcement.getCreatedAt());
+        }
 
         @Override
         public ChatHistoryPageResponse getMessages(
@@ -131,20 +164,18 @@ public class ChatServiceImpl implements ChatService {
                 List<ChatHistoryResponse> messages = pageMessages
                                 .stream()
                                 .map(
-                                        message -> new ChatHistoryResponse(
-                                                message.getId(),
-                                                message.getSender()
-                                                                .getId(),
-                                                message.getSender()
-                                                                .getNickname(),
-                                                message.getType(),
-                                                message.getContent(),
-                                                message.getSentAt(),
-                                                message.getReadAt(),
-                                                message.isDeleted(),
-                                                message.getDeletedAt()
-                                        )
-                                )
+                                                message -> new ChatHistoryResponse(
+                                                                message.getId(),
+                                                                message.getSender()
+                                                                                .getId(),
+                                                                message.getSender()
+                                                                                .getNickname(),
+                                                                message.getType(),
+                                                                message.getContent(),
+                                                                message.getSentAt(),
+                                                                message.getReadAt(),
+                                                                message.isDeleted(),
+                                                                message.getDeletedAt()))
                                 .toList();
 
                 // 현재 페이지의 가장 오래된 메시지 ID.
@@ -220,16 +251,10 @@ public class ChatServiceImpl implements ChatService {
                                                 () -> new CustomException(
                                                                 ErrorCode.MESSAGE_NOT_FOUND));
 
-                /*
-                 * 이미 삭제됨
-                 */
                 if (message.isDeleted()) {
                         return;
                 }
 
-                /*
-                 * 내가 보낸 메시지만 삭제 가능
-                 */
                 if (!message.getSender()
                                 .getId()
                                 .equals(userId)) {
@@ -238,9 +263,6 @@ public class ChatServiceImpl implements ChatService {
                                         ErrorCode.MESSAGE_DELETE_FORBIDDEN);
                 }
 
-                /*
-                 * 삭제 전에 필요한 정보 보관
-                 */
                 Long coupleId = message.getCouple()
                                 .getId();
 
@@ -250,15 +272,16 @@ public class ChatServiceImpl implements ChatService {
                                 ? message.getContent()
                                 : null;
 
-                /*
-                 * soft delete
-                 */
+                Optional<ChatAnnouncement> announcement = chatAnnouncementRepository
+                                .findByMessage(message);
+
+                boolean wasAnnouncement = announcement.isPresent();
+
+                announcement.ifPresent(
+                                chatAnnouncementRepository::delete);
+
                 message.deleteForEveryone();
 
-                /*
-                 * DB commit 성공 후
-                 * 외부 리소스 정리
-                 */
                 eventPublisher.publishEvent(
                                 new ChatMessageDeletedEvent(
                                                 coupleId,
@@ -266,5 +289,191 @@ public class ChatServiceImpl implements ChatService {
                                                 type,
                                                 imagePath,
                                                 message.getDeletedAt()));
+
+                if (wasAnnouncement) {
+                        eventPublisher.publishEvent(
+                                        new ChatAnnouncementChangedEvent(
+                                                        coupleId));
+                }
+        }
+
+        @Override
+        @Transactional
+        public ChatAnnouncementResponse setAnnouncement(
+                        Long userId,
+                        Long coupleId,
+                        Long messageId) {
+                User user = userRepository
+                                .findById(userId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.USER_NOT_FOUND));
+
+                Couple couple = coupleRepository
+                                .findById(coupleId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                /*
+                 * 현재 로그인 사용자가
+                 * 해당 커플 구성원인지 확인
+                 */
+                var member = coupleMemberRepository
+                                .findByUser(user)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                if (!member.getCouple()
+                                .getId()
+                                .equals(coupleId)) {
+
+                        throw new CustomException(
+                                        ErrorCode.COUPLE_NOT_FOUND);
+                }
+
+                Message message = messageRepository
+                                .findById(messageId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.MESSAGE_NOT_FOUND));
+
+                /*
+                 * 다른 채팅방 메시지를
+                 * 공지할 수 없도록 방지
+                 */
+                if (!message.getCouple()
+                                .getId()
+                                .equals(coupleId)) {
+
+                        throw new CustomException(
+                                        ErrorCode.MESSAGE_NOT_FOUND);
+                }
+
+                if (message.isDeleted()) {
+                        throw new CustomException(
+                                        ErrorCode.MESSAGE_NOT_FOUND);
+                }
+
+                /*
+                 * 일단 TEXT만 공지 가능
+                 */
+                if (message.getType() != MessageType.TEXT) {
+
+                        throw new IllegalArgumentException(
+                                        "텍스트 메시지만 공지할 수 있습니다.");
+                }
+
+                ChatAnnouncement announcement = chatAnnouncementRepository
+                                .findByCouple(couple)
+                                .orElseGet(
+                                                () -> ChatAnnouncement
+                                                                .builder()
+                                                                .couple(couple)
+                                                                .message(message)
+                                                                .createdBy(user)
+                                                                .content(
+                                                                                message.getContent())
+                                                                .build());
+
+                if (announcement.getId() != null) {
+                        announcement.update(
+                                        message,
+                                        user);
+                }
+
+                ChatAnnouncement saved = chatAnnouncementRepository.save(
+                                announcement);
+
+                eventPublisher.publishEvent(
+                                new ChatAnnouncementChangedEvent(
+                                                coupleId));
+
+                return toAnnouncementResponse(
+                                saved);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public Optional<ChatAnnouncementResponse> getAnnouncement(
+                        Long userId,
+                        Long coupleId) {
+
+                Couple couple = coupleRepository
+                                .findById(coupleId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                return chatAnnouncementRepository
+                                .findByCouple(couple)
+                                .map(
+                                                this::toAnnouncementResponse);
+        }
+
+        @Override
+        @Transactional
+        public void removeAnnouncement(
+                        Long userId,
+                        Long coupleId) {
+                User user = userRepository
+                                .findById(userId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.USER_NOT_FOUND));
+
+                Couple couple = coupleRepository
+                                .findById(coupleId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                /*
+                 * 현재 사용자가 이 커플의 구성원인지 확인
+                 */
+                var coupleMember = coupleMemberRepository
+                                .findByUser(user)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                if (!coupleMember
+                                .getCouple()
+                                .getId()
+                                .equals(coupleId)) {
+
+                        throw new CustomException(
+                                        ErrorCode.COUPLE_NOT_FOUND);
+                }
+
+                /*
+                 * 현재 공지 조회
+                 */
+                ChatAnnouncement announcement = chatAnnouncementRepository
+                                .findByCouple(couple)
+                                .orElse(null);
+
+                /*
+                 * 이미 공지가 없으면 그냥 종료
+                 */
+                if (announcement == null) {
+                        return;
+                }
+
+                /*
+                 * 공지 삭제
+                 */
+                chatAnnouncementRepository.delete(
+                                announcement);
+
+                /*
+                 * DB commit 이후
+                 * 상대방 화면도 공지가 사라지도록
+                 * WebSocket 이벤트 발생
+                 */
+                eventPublisher.publishEvent(
+                                new ChatAnnouncementChangedEvent(
+                                                coupleId));
         }
 }

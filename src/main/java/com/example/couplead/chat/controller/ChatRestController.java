@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 
+import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.chat.document.MessageDocument;
@@ -30,57 +31,99 @@ import org.springframework.web.bind.annotation.PostMapping;
 @RequiredArgsConstructor
 @RequestMapping("/api/chat")
 public class ChatRestController {
-    private final ChatSearchService chatSearchService;
-    private final ChatService chatService;
-    private final ChatImageStorageService chatImageStorageService;
+        private final ChatSearchService chatSearchService;
+        private final ChatService chatService;
+        private final ChatImageStorageService chatImageStorageService;
 
-    @GetMapping("/{coupleId}")
-    public ApiResponse<ChatHistoryPageResponse> getMessages(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long coupleId,
-            @RequestParam(required = false) Long beforeMessageId,
-            @RequestParam(defaultValue = "50") int size) {
-        ChatHistoryPageResponse response = chatService.getMessages(
-                userDetails.getUser().getId(),
-                coupleId,
-                beforeMessageId,
-                size);
+        @GetMapping("/{coupleId}")
+        public ApiResponse<ChatHistoryPageResponse> getMessages(
+                        @AuthenticationPrincipal CustomUserDetails userDetails,
+                        @PathVariable Long coupleId,
+                        @RequestParam(required = false) Long beforeMessageId,
+                        @RequestParam(defaultValue = "50") int size) {
+                ChatHistoryPageResponse response = chatService.getMessages(
+                                userDetails.getUser().getId(),
+                                coupleId,
+                                beforeMessageId,
+                                size);
 
-        return ApiResponse.success(response);
-    }
+                return ApiResponse.success(response);
+        }
 
-    @PostMapping("/{coupleId}/read")
-    public ApiResponse<Void> markAsRead(@AuthenticationPrincipal CustomUserDetails userDetails,
-            @PathVariable Long coupleId) {
-        chatService.markAsRead(coupleId, userDetails.getUser().getId());
+        @PostMapping("/{coupleId}/read")
+        public ApiResponse<Void> markAsRead(@AuthenticationPrincipal CustomUserDetails userDetails,
+                        @PathVariable Long coupleId) {
+                chatService.markAsRead(coupleId, userDetails.getUser().getId());
 
-        return ApiResponse.success(null);
-    }
+                return ApiResponse.success(null);
+        }
 
-    @GetMapping("/{coupleId}/search")
-    public ApiResponse<List<MessageDocument>> search(@PathVariable Long coupleId, @RequestParam String keyword) {
-        return ApiResponse.success(chatSearchService.search(coupleId, keyword));
-    }
+        @GetMapping("/{coupleId}/search")
+        public ApiResponse<List<MessageDocument>> search(@PathVariable Long coupleId, @RequestParam String keyword) {
+                return ApiResponse.success(chatSearchService.search(coupleId, keyword));
+        }
 
-    @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<ChatImageUploadResponse> uploadImage(
-            @RequestPart("file") MultipartFile file) {
-        String imageUrl = chatImageStorageService.save(file);
+        @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ApiResponse<ChatImageUploadResponse> uploadImage(
+                        @RequestPart("file") MultipartFile file) {
+                String imageUrl = chatImageStorageService.save(file);
 
-        return ApiResponse.success(
-                new ChatImageUploadResponse(
-                        imageUrl));
-    }
+                return ApiResponse.success(
+                                new ChatImageUploadResponse(
+                                                imageUrl));
+        }
 
-    @DeleteMapping("/messages/{messageId}")
-    public ApiResponse<Void> deleteMessage(
-            @PathVariable Long messageId,
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        chatService.deleteMessage(
-                userDetails.getUser().getId(),
-                messageId);
+        @DeleteMapping("/messages/{messageId}")
+        public ApiResponse<Void> deleteMessage(
+                        @PathVariable Long messageId,
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+                chatService.deleteMessage(
+                                userDetails.getUser().getId(),
+                                messageId);
 
-        return ApiResponse.success(
-                null);
-    }
+                return ApiResponse.success(
+                                null);
+        }
+
+        @PostMapping("/{coupleId}/announcement/{messageId}")
+        public ApiResponse<ChatAnnouncementResponse> setAnnouncement(
+                        @PathVariable Long coupleId,
+
+                        @PathVariable Long messageId,
+
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+                return ApiResponse.success(
+                                chatService.setAnnouncement(
+                                                userDetails.getUser().getId(),
+                                                coupleId,
+                                                messageId));
+        }
+
+        @GetMapping("/{coupleId}/announcement")
+        public ApiResponse<ChatAnnouncementResponse> getAnnouncement(
+                        @PathVariable Long coupleId,
+
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+                return ApiResponse.success(
+                                chatService
+                                                .getAnnouncement(
+                                                                userDetails.getUser().getId(),
+                                                                coupleId)
+                                                .orElse(null));
+        }
+
+        @DeleteMapping("/{coupleId}/announcement")
+        public ApiResponse<Void> removeAnnouncement(
+                        @PathVariable Long coupleId,
+
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+                chatService.removeAnnouncement(
+                                userDetails.getUser().getId(),
+                                coupleId);
+
+                return ApiResponse.success(
+                                null);
+        }
 }
