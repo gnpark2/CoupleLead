@@ -14,7 +14,8 @@ public record ChatHistoryResponse(
         LocalDateTime readAt,
         boolean deleted,
         LocalDateTime deletedAt,
-
+        boolean edited,
+        LocalDateTime editedAt,
         Long replyToMessageId,
         String replyToSenderNickname,
         MessageType replyToType,

@@ -1,9 +1,11 @@
 package com.example.couplead.chat.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
+import com.example.couplead.chat.dto.response.ChatSearchResponse;
 
 public interface ChatService {
         ChatHistoryPageResponse getMessages(
@@ -19,6 +21,17 @@ public interface ChatService {
         void deleteMessage(
                         Long userId,
                         Long messageId);
+
+        void editMessage(
+                        Long userId,
+                        Long messageId,
+                        String content);
+
+        List<ChatSearchResponse> searchMessages(
+                        Long userId,
+                        Long coupleId,
+                        String keyword,
+                        boolean useNori);
 
         ChatAnnouncementResponse setAnnouncement(
                         Long userId,

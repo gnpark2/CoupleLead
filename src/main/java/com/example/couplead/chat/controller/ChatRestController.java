@@ -12,11 +12,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 
+import com.example.couplead.chat.dto.request.ChatMessageEditRequest;
 import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.chat.document.MessageDocument;
 import com.example.couplead.chat.dto.response.ChatImageUploadResponse;
+import com.example.couplead.chat.dto.response.ChatSearchResponse;
 import com.example.couplead.chat.service.ChatService;
 import com.example.couplead.common.response.ApiResponse;
 
@@ -24,8 +26,10 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequiredArgsConstructor
@@ -59,18 +63,20 @@ public class ChatRestController {
         }
 
         @GetMapping("/{coupleId}/search")
-        public ApiResponse<List<MessageDocument>> search(@PathVariable Long coupleId, @RequestParam String keyword) {
-                return ApiResponse.success(chatSearchService.search(coupleId, keyword));
-        }
+        public ApiResponse<List<ChatSearchResponse>> searchMessages(
+                        @PathVariable Long coupleId,
 
-        @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-        public ApiResponse<ChatImageUploadResponse> uploadImage(
-                        @RequestPart("file") MultipartFile file) {
-                String imageUrl = chatImageStorageService.save(file);
+                        @RequestParam String keyword,
 
+                        @RequestParam(defaultValue = "true") boolean useNori,
+
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
                 return ApiResponse.success(
-                                new ChatImageUploadResponse(
-                                                imageUrl));
+                                chatService.searchMessages(
+                                                userDetails.getUser().getId(),
+                                                coupleId,
+                                                keyword,
+                                                useNori));
         }
 
         @DeleteMapping("/messages/{messageId}")
@@ -83,6 +89,19 @@ public class ChatRestController {
 
                 return ApiResponse.success(
                                 null);
+        }
+
+        @PatchMapping("/messages/{messageId}")
+        public ApiResponse<Void> editMessage(
+                        @PathVariable Long messageId,
+                        @RequestBody ChatMessageEditRequest request,
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+                chatService.editMessage(
+                                userDetails.getUser().getId(),
+                                messageId,
+                                request.content());
+
+                return ApiResponse.success(null);
         }
 
         @PostMapping("/{coupleId}/announcement/{messageId}")
@@ -125,5 +144,14 @@ public class ChatRestController {
 
                 return ApiResponse.success(
                                 null);
+        }
+
+        // elasticsearch용 임시 API
+        @PostMapping("/search/reindex")
+        public ApiResponse<Void> reindexMessages() {
+
+                chatSearchService.reindexAllMessages();
+
+                return ApiResponse.success(null);
         }
 }

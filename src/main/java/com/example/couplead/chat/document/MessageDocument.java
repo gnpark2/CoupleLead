@@ -6,6 +6,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.InnerField;
+import org.springframework.data.elasticsearch.annotations.MultiField;
+import org.springframework.data.elasticsearch.annotations.Setting;
 
 import com.example.couplead.chat.domain.MessageType;
 
@@ -19,7 +22,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(indexName = "messages")
+@Setting(settingPath = "/elasticsearch/message-settings.json")
 public class MessageDocument {
+
     @Id
     private String id;
 
@@ -35,9 +40,16 @@ public class MessageDocument {
     @Field(type = FieldType.Keyword)
     private MessageType type;
 
-    @Field(type = FieldType.Text, analyzer = "standard")
+    @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "standard", searchAnalyzer = "standard"), otherFields = {
+            @InnerField(suffix = "nori", type = FieldType.Text, analyzer = "couplead_nori", searchAnalyzer = "couplead_nori")
+    })
     private String content;
 
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime sentAt;
+
+    public void updateContent(
+            String content) {
+        this.content = content;
+    }
 }

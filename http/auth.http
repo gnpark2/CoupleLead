@@ -209,5 +209,20 @@ Content-Type: application/json
   "nickname": "Lee"
 }
 
-### 이미지 업로드 테스트
-POST http://
+####################################################
+
+### Elasticsearch 테스트 재색인 API
+POST http://localhost:8080/api/chat/search/reindex
+Authorization: Bearer {{accessToken}}
+
+### Elasticsearch 테스트 API
+GET http://localhost:8080/api/chat/1/search?keyword=채팅&useNori=true
+Authorization: Bearer {{accessToken}}
+
+### Elasticsearch 테스트 API
+GET http://localhost:8080/api/chat/1/search?keyword=채팅&useNori=false
+Authorization: Bearer {{accessToken}}
+
+### Elasticsearch 테스트 API
+GET http://localhost:8080/api/chat/1/search?keyword=먹
+Authorization: Bearer {{accessToken}}

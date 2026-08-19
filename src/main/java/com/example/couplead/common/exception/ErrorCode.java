@@ -19,7 +19,10 @@ public enum ErrorCode {
     CANNOT_CONNECT_SELF(400, "자기 자신과 연결할 수 없습니다."),
     COUPLE_NOT_FOUND(404, "커플을 찾을 수 없습니다."),
     MESSAGE_NOT_FOUND( HttpStatus.NOT_FOUND, "메시지를 찾을 수 없습니다."),
-    MESSAGE_DELETE_FORBIDDEN( HttpStatus.FORBIDDEN, "본인이 보낸 메시지만 삭제할 수 있습니다.");
+    MESSAGE_DELETE_FORBIDDEN( HttpStatus.FORBIDDEN, "본인이 보낸 메시지만 삭제할 수 있습니다."),
+    MESSAGE_EDIT_FORBIDDEN( HttpStatus.FORBIDDEN, "본인이 보낸 메시지만 수정할 수 있습니다."),
+    MESSAGE_EDIT_NOT_ALLOWED( HttpStatus.BAD_REQUEST, "텍스트 메시지만 수정할 수 있습니다."),
+    INVALID_MESSAGE_CONTENT( HttpStatus.BAD_REQUEST, "메시지 내용이 비어 있습니다.");
 
     private final int status;
     private final String message;

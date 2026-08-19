@@ -17,11 +17,14 @@ import com.example.couplead.chat.domain.MessageType;
 import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryResponse;
+import com.example.couplead.chat.dto.response.ChatSearchResponse;
 import com.example.couplead.chat.event.ChatAnnouncementChangedEvent;
 import com.example.couplead.chat.event.ChatMessageDeletedEvent;
+import com.example.couplead.chat.event.ChatMessageEditedEvent;
 import com.example.couplead.chat.event.ChatReadCommittedEvent;
 import com.example.couplead.chat.repository.ChatAnnouncementRepository;
 import com.example.couplead.chat.repository.MessageRepository;
+import com.example.couplead.chat.repository.MessageSearchRepository;
 import com.example.couplead.common.exception.CustomException;
 import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.couple.domain.Couple;
@@ -48,6 +51,7 @@ public class ChatServiceImpl implements ChatService {
         private final ApplicationEventPublisher eventPublisher;
         private final ChatAnnouncementRepository chatAnnouncementRepository;
         private final CoupleRepository coupleRepository;
+        private final ChatSearchService chatSearchService;
 
         private ChatAnnouncementResponse toAnnouncementResponse(
                         ChatAnnouncement announcement) {
@@ -178,6 +182,9 @@ public class ChatServiceImpl implements ChatService {
                                                         message.getReadAt(),
                                                         message.isDeleted(),
                                                         message.getDeletedAt(),
+
+                                                        message.isEdited(),
+                                                        message.getEditedAt(),
 
                                                         reply == null
                                                                         ? null
@@ -317,6 +324,130 @@ public class ChatServiceImpl implements ChatService {
                                         new ChatAnnouncementChangedEvent(
                                                         coupleId));
                 }
+        }
+
+        @Override
+        @Transactional
+        public void editMessage(
+                        Long userId,
+                        Long messageId,
+                        String content) {
+                Message message = messageRepository
+                                .findById(messageId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.MESSAGE_NOT_FOUND));
+
+                /*
+                 * 이미 삭제된 메시지는 수정 불가
+                 */
+                if (message.isDeleted()) {
+                        throw new CustomException(
+                                        ErrorCode.MESSAGE_NOT_FOUND);
+                }
+
+                /*
+                 * 본인 메시지만 수정 가능
+                 */
+                if (!message.getSender()
+                                .getId()
+                                .equals(userId)) {
+
+                        throw new CustomException(
+                                        ErrorCode.MESSAGE_EDIT_FORBIDDEN);
+                }
+
+                /*
+                 * TEXT 메시지만 수정 가능
+                 */
+                if (message.getType() != MessageType.TEXT) {
+
+                        throw new CustomException(
+                                        ErrorCode.MESSAGE_EDIT_NOT_ALLOWED);
+                }
+
+                String trimmed = content == null
+                                ? ""
+                                : content.trim();
+
+                if (trimmed.isEmpty()) {
+                        throw new CustomException(
+                                        ErrorCode.INVALID_MESSAGE_CONTENT);
+                }
+
+                /*
+                 * 기존 내용과 같으면 굳이 수정하지 않음
+                 */
+                if (message.getContent()
+                                .equals(trimmed)) {
+                        return;
+                }
+
+                message.editContent(
+                                trimmed);
+
+                eventPublisher.publishEvent(
+                                new ChatMessageEditedEvent(
+                                                message.getCouple().getId(),
+                                                message.getId(),
+                                                trimmed,
+                                                message.getEditedAt()));
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<ChatSearchResponse> searchMessages(
+                        Long userId,
+                        Long coupleId,
+                        String keyword,
+                        boolean useNori) {
+                User user = userRepository
+                                .findById(userId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.USER_NOT_FOUND));
+
+                CoupleMember member = coupleMemberRepository
+                                .findByUser(user)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                Couple couple = member.getCouple();
+
+                /*
+                 * 다른 커플 채팅 검색 방지
+                 */
+                if (!couple.getId()
+                                .equals(coupleId)) {
+
+                        throw new CustomException(
+                                        ErrorCode.COUPLE_NOT_FOUND);
+                }
+
+                String trimmed = keyword == null
+                                ? ""
+                                : keyword.trim();
+
+                if (trimmed.isEmpty()) {
+                        return List.of();
+                }
+
+                return chatSearchService
+                                .search(
+                                                coupleId,
+                                                trimmed,
+                                                useNori)
+                                .stream()
+                                .map(
+                                                document -> new ChatSearchResponse(
+                                                                Long.parseLong(
+                                                                                document.getId()),
+                                                                document.getSenderId(),
+                                                                document.getSenderNickname(),
+                                                                document.getContent(),
+                                                                document.getSentAt()))
+                                .toList();
         }
 
         @Override

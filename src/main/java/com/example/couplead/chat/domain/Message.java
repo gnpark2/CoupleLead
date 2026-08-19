@@ -66,8 +66,21 @@ public class Message extends BaseEntity {
 
     private LocalDateTime readAt;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean edited = false;
+
+    private LocalDateTime editedAt;
+
     public void markAsRead(LocalDateTime readAt) {
         this.readAt = readAt;
+    }
+
+    public void editContent(
+            String content) {
+        this.content = content;
+        this.edited = true;
+        this.editedAt = LocalDateTime.now();
     }
 
     public void deleteForEveryone() {
