@@ -22,6 +22,7 @@ import com.example.couplead.chat.document.MessageDocument;
 import com.example.couplead.chat.dto.response.ChatImageUploadResponse;
 import com.example.couplead.chat.dto.response.ChatSearchPageResponse;
 import com.example.couplead.chat.dto.response.ChatSearchResponse;
+import com.example.couplead.chat.dto.response.ChatUnreadBoundaryResponse;
 import com.example.couplead.chat.service.ChatService;
 import com.example.couplead.common.response.ApiResponse;
 
@@ -156,6 +157,16 @@ public class ChatRestController {
 
                 return ApiResponse.success(
                                 null);
+        }
+
+        @GetMapping("/{coupleId}/unread-boundary")
+        public ApiResponse<ChatUnreadBoundaryResponse> getUnreadBoundary(
+                        @PathVariable Long coupleId,
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+                return ApiResponse.success(
+                                chatService.getUnreadBoundary(
+                                                userDetails.getUser().getId(),
+                                                coupleId));
         }
 
         // elasticsearch용 임시 API

@@ -19,6 +19,7 @@ import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryResponse;
 import com.example.couplead.chat.dto.response.ChatSearchPageResponse;
 import com.example.couplead.chat.dto.response.ChatSearchResponse;
+import com.example.couplead.chat.dto.response.ChatUnreadBoundaryResponse;
 import com.example.couplead.chat.event.ChatAnnouncementChangedEvent;
 import com.example.couplead.chat.event.ChatMessageDeletedEvent;
 import com.example.couplead.chat.event.ChatMessageEditedEvent;
@@ -647,5 +648,45 @@ public class ChatServiceImpl implements ChatService {
                 eventPublisher.publishEvent(
                                 new ChatAnnouncementChangedEvent(
                                                 coupleId));
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public ChatUnreadBoundaryResponse getUnreadBoundary(
+                        Long userId,
+                        Long coupleId) {
+                User user = userRepository.findById(userId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.USER_NOT_FOUND));
+
+                CoupleMember member = coupleMemberRepository.findByUser(user)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                Couple couple = member.getCouple();
+
+                if (!couple.getId().equals(coupleId)) {
+                        throw new CustomException(
+                                        ErrorCode.COUPLE_NOT_FOUND);
+                }
+
+                Message firstUnread = messageRepository
+                                .findFirstByCoupleIdAndSenderIdNotAndReadAtIsNullOrderByIdAsc(
+                                                coupleId,
+                                                userId)
+                                .orElse(null);
+
+                long unreadCount = messageRepository
+                                .countByCoupleIdAndSenderIdNotAndReadAtIsNull(
+                                                coupleId,
+                                                userId);
+
+                return new ChatUnreadBoundaryResponse(
+                                firstUnread == null
+                                                ? null
+                                                : firstUnread.getId(),
+                                unreadCount);
         }
 }

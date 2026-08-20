@@ -37,6 +37,10 @@ public interface MessageRepository
         Optional<Message> findTopByCoupleIdOrderBySentAtDesc(
                         Long coupleId);
 
+        Optional<Message> findFirstByCoupleIdAndSenderIdNotAndReadAtIsNullOrderByIdAsc(
+                        Long coupleId,
+                        Long senderId);
+
         long countByCoupleIdAndSenderIdNotAndReadAtIsNull(
                         Long coupleId,
                         Long userId);

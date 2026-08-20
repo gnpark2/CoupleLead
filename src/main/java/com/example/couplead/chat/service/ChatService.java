@@ -8,6 +8,7 @@ import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.chat.dto.response.ChatSearchPageResponse;
 import com.example.couplead.chat.dto.response.ChatSearchResponse;
+import com.example.couplead.chat.dto.response.ChatUnreadBoundaryResponse;
 
 public interface ChatService {
         ChatHistoryPageResponse getMessages(
@@ -48,6 +49,10 @@ public interface ChatService {
                         Long coupleId);
 
         void removeAnnouncement(
+                        Long userId,
+                        Long coupleId);
+
+        ChatUnreadBoundaryResponse getUnreadBoundary(
                         Long userId,
                         Long coupleId);
 }

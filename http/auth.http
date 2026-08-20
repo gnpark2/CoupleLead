@@ -234,3 +234,9 @@ Authorization: Bearer {{accessToken}}
 ### Elasticsearch 테스트 API
 GET http://localhost:8080/api/chat/1/search?keyword=먹
 Authorization: Bearer {{accessToken}}
+
+########################################################
+
+### Unread 테스트 API
+GET http://localhost:8080/api/chat/1/unread-boundary
+Authorization: Bearer {{accessToken}}
