@@ -14,57 +14,48 @@ import com.example.couplead.chat.domain.Message;
 import com.example.couplead.couple.domain.Couple;
 
 public interface MessageRepository
-        extends JpaRepository<Message, Long> {
+                extends JpaRepository<Message, Long> {
 
-    /*
-     * 최초 채팅 조회
-     * 최신 메시지부터 역순으로 가져온다.
-     */
-    List<Message> findByCoupleOrderByIdDesc(
-            Couple couple,
-            Pageable pageable
-    );
+        /*
+         * 최초 채팅 조회
+         * 최신 메시지부터 역순으로 가져온다.
+         */
+        List<Message> findByCoupleOrderByIdDesc(
+                        Couple couple,
+                        Pageable pageable);
 
-    /*
-     * 이전 메시지 조회
-     * 현재 화면의 가장 오래된 messageId보다
-     * 작은 메시지만 가져온다.
-     */
-    List<Message> findByCoupleAndIdLessThanOrderByIdDesc(
-            Couple couple,
-            Long beforeMessageId,
-            Pageable pageable
-    );
+        /*
+         * 이전 메시지 조회
+         * 현재 화면의 가장 오래된 messageId보다
+         * 작은 메시지만 가져온다.
+         */
+        List<Message> findByCoupleAndIdLessThanOrderByIdDesc(
+                        Couple couple,
+                        Long beforeMessageId,
+                        Pageable pageable);
 
-    Optional<Message>
-            findTopByCoupleIdOrderBySentAtDesc(
-                    Long coupleId
-            );
+        Optional<Message> findTopByCoupleIdOrderBySentAtDesc(
+                        Long coupleId);
 
-    long countByCoupleIdAndSenderIdNotAndReadAtIsNull(
-            Long coupleId,
-            Long userId
-    );
+        long countByCoupleIdAndSenderIdNotAndReadAtIsNull(
+                        Long coupleId,
+                        Long userId);
 
-    @Modifying(
-            clearAutomatically = true,
-            flushAutomatically = true
-    )
-    @Query("""
-        UPDATE Message m
-           SET m.readAt = :readAt
-         WHERE m.couple.id = :coupleId
-           AND m.sender.id <> :readerId
-           AND m.readAt IS NULL
-        """)
-    int markAsRead(
-            @Param("coupleId")
-            Long coupleId,
+        Optional<Message> findByClientMessageId(
+                        String clientMessageId);
 
-            @Param("readerId")
-            Long readerId,
+        @Modifying(clearAutomatically = true, flushAutomatically = true)
+        @Query("""
+                        UPDATE Message m
+                           SET m.readAt = :readAt
+                         WHERE m.couple.id = :coupleId
+                           AND m.sender.id <> :readerId
+                           AND m.readAt IS NULL
+                        """)
+        int markAsRead(
+                        @Param("coupleId") Long coupleId,
 
-            @Param("readAt")
-            LocalDateTime readAt
-    );
+                        @Param("readerId") Long readerId,
+
+                        @Param("readAt") LocalDateTime readAt);
 }

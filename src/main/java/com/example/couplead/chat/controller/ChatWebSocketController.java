@@ -30,90 +30,95 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/chat")
 public class ChatWebSocketController {
 
-    private final ChatEventProducer chatEventProducer;
-    private final UserRepository userRepository;
-    private final TypingService typingService;
-    private final MessageRepository messageRepository;
+        private final ChatEventProducer chatEventProducer;
+        private final UserRepository userRepository;
+        private final TypingService typingService;
+        private final MessageRepository messageRepository;
 
-    @MessageMapping("/chat/send")
-    @Transactional
-    public void send(
-            ChatMessageRequest request,
-            Principal principal) {
+        @MessageMapping("/chat/send")
+        @Transactional
+        public void send(
+                        ChatMessageRequest request,
+                        Principal principal) {
 
-        if (principal == null) {
-            throw new IllegalStateException("Principal is null");
+                if (principal == null) {
+                        throw new IllegalStateException("Principal is null");
+                }
+
+                Long userId = Long.parseLong(principal.getName());
+
+                User user = userRepository.findById(userId)
+                                .orElseThrow();
+
+                Message replyToMessage = null;
+
+                if (request.replyToMessageId() != null) {
+                        replyToMessage = messageRepository
+                                        .findById(
+                                                        request.replyToMessageId())
+                                        .orElseThrow(
+                                                        () -> new CustomException(
+                                                                        ErrorCode.MESSAGE_NOT_FOUND));
+
+                        if (!replyToMessage
+                                        .getCouple()
+                                        .getId()
+                                        .equals(
+                                                        request.coupleId())) {
+
+                                throw new CustomException(
+                                                ErrorCode.MESSAGE_NOT_FOUND);
+                        }
+                }
+
+                log.info(
+                                "[CHAT SEND] clientMessageId={}",
+                                request.clientMessageId());
+
+                ChatMessageResponse message = new ChatMessageResponse(
+                                request.coupleId(),
+                                user.getId(),
+                                user.getNickname(),
+                                request.type(),
+                                request.content(),
+                                LocalDateTime.now(),
+                                false,
+                                null,
+                                replyToMessage == null
+                                                ? null
+                                                : replyToMessage.getId(),
+
+                                replyToMessage == null
+                                                ? null
+                                                : replyToMessage
+                                                                .getSender()
+                                                                .getNickname(),
+
+                                replyToMessage == null
+                                                ? null
+                                                : replyToMessage
+                                                                .getType(),
+
+                                replyToMessage == null
+                                                ? null
+                                                : replyToMessage
+                                                                .isDeleted()
+                                                                                ? "삭제된 메시지입니다."
+                                                                                : replyToMessage
+                                                                                                .getContent(),
+                                request.clientMessageId());
+
+                chatEventProducer.publish(message);
         }
 
-        Long userId = Long.parseLong(principal.getName());
+        @MessageMapping("/chat/typing")
+        public void typing(
+                        ChatTypingRequest request,
+                        Principal principal) {
+                Long userId = Long.parseLong(principal.getName());
 
-        User user = userRepository.findById(userId)
-                .orElseThrow();
-
-        Message replyToMessage = null;
-
-        if (request.replyToMessageId() != null) {
-            replyToMessage = messageRepository
-                    .findById(
-                            request.replyToMessageId())
-                    .orElseThrow(
-                            () -> new CustomException(
-                                    ErrorCode.MESSAGE_NOT_FOUND));
-
-            if (!replyToMessage
-                    .getCouple()
-                    .getId()
-                    .equals(
-                            request.coupleId())) {
-
-                throw new CustomException(
-                        ErrorCode.MESSAGE_NOT_FOUND);
-            }
+                User user = userRepository.findById(userId).orElseThrow();
+                log.info("Typing: {}", user.getNickname());
+                typingService.typing(request.coupleId(), userId, user.getNickname());
         }
-
-        ChatMessageResponse message = new ChatMessageResponse(
-                request.coupleId(),
-                user.getId(),
-                user.getNickname(),
-                request.type(),
-                request.content(),
-                LocalDateTime.now(),
-                false,
-                null,
-                replyToMessage == null
-                        ? null
-                        : replyToMessage.getId(),
-
-                replyToMessage == null
-                        ? null
-                        : replyToMessage
-                                .getSender()
-                                .getNickname(),
-
-                replyToMessage == null
-                        ? null
-                        : replyToMessage
-                                .getType(),
-
-                replyToMessage == null
-                        ? null
-                        : replyToMessage
-                                .isDeleted()
-                                        ? "삭제된 메시지입니다."
-                                        : replyToMessage
-                                                .getContent());
-
-        chatEventProducer.publish(message);
-    }
-
-    @MessageMapping("/chat/typing")
-    public void typing(
-            ChatTypingRequest request,
-            Principal principal) {
-        Long userId = Long.parseLong(principal.getName());
-
-        User user = userRepository.findById(userId).orElseThrow();
-        log.info("Typing: {}", user.getNickname());
-        typingService.typing(request.coupleId(), userId, user.getNickname());
-    }
 }

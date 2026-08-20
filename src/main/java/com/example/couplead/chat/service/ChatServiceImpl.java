@@ -183,7 +183,6 @@ public class ChatServiceImpl implements ChatService {
                                                         message.getReadAt(),
                                                         message.isDeleted(),
                                                         message.getDeletedAt(),
-
                                                         message.isEdited(),
                                                         message.getEditedAt(),
 
@@ -193,8 +192,7 @@ public class ChatServiceImpl implements ChatService {
 
                                                         reply == null
                                                                         ? null
-                                                                        : reply.getSender()
-                                                                                        .getNickname(),
+                                                                        : reply.getSender().getNickname(),
 
                                                         reply == null
                                                                         ? null
@@ -204,7 +202,10 @@ public class ChatServiceImpl implements ChatService {
                                                                         ? null
                                                                         : reply.isDeleted()
                                                                                         ? "삭제된 메시지입니다."
-                                                                                        : reply.getContent());
+                                                                                        : reply.getContent(),
+
+                                                        // 추가
+                                                        message.getClientMessageId());
                                 })
                                 .toList();
 

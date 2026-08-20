@@ -1,5 +1,7 @@
 package com.example.couplead.event.consumer;
 
+import java.util.Optional;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -50,6 +52,23 @@ public class ChatMessageConsumer {
                                         .orElse(null);
                 }
 
+                log.info(
+                                "[CHAT CONSUMER] clientMessageId={}",
+                                message.clientMessageId());
+
+                if (message.clientMessageId() != null) {
+                        Optional<Message> existing = messageRepository.findByClientMessageId(
+                                        message.clientMessageId());
+
+                        if (existing.isPresent()) {
+                                /*
+                                 * 이미 처리한 메시지.
+                                 * 다시 INSERT하지 않는다.
+                                 */
+                                return;
+                        }
+                }
+
                 // mysql 저장
                 Message savedMessage = messageRepository.save(
                                 Message.builder()
@@ -61,6 +80,7 @@ public class ChatMessageConsumer {
                                                                                 : message.type())
                                                 .content(message.content())
                                                 .sentAt(message.sentAt())
+                                                .clientMessageId(message.clientMessageId())
                                                 .deleted(false)
                                                 .replyToMessage(replyToMessage)
                                                 .deleted(false)

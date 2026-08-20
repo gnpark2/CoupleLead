@@ -76,6 +76,11 @@ public class Message extends BaseEntity {
         this.readAt = readAt;
     }
 
+    @Column(name = "client_message_id",
+        unique = true
+    )
+    private String clientMessageId;
+
     public void editContent(
             String content) {
         this.content = content;

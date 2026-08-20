@@ -5,19 +5,20 @@ import java.time.LocalDateTime;
 import com.example.couplead.chat.domain.MessageType;
 
 public record ChatMessageResponse(
-        Long coupleId,
-        Long senderId,
-        String senderNickname,
+                Long coupleId,
+                Long senderId,
+                String senderNickname,
 
-        MessageType type,
-        String content,
-        LocalDateTime sentAt,
+                MessageType type,
+                String content,
+                LocalDateTime sentAt,
 
-        boolean deleted,
-        LocalDateTime deletedAt,
+                boolean deleted,
+                LocalDateTime deletedAt,
 
-        Long replyToMessageId,
-        String replyToSenderNickname,
-        MessageType replyToType,
-        String replyToContent) {
+                Long replyToMessageId,
+                String replyToSenderNickname,
+                MessageType replyToType,
+                String replyToContent,
+                String clientMessageId) {
 }
