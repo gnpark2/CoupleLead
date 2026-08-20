@@ -29,6 +29,9 @@ public class MessageDocument {
     private String id;
 
     @Field(type = FieldType.Long)
+    private Long messageId;
+
+    @Field(type = FieldType.Long)
     private Long coupleId;
 
     @Field(type = FieldType.Long)

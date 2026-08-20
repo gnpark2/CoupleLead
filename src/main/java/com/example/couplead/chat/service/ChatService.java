@@ -1,10 +1,12 @@
 package com.example.couplead.chat.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
+import com.example.couplead.chat.dto.response.ChatSearchPageResponse;
 import com.example.couplead.chat.dto.response.ChatSearchResponse;
 
 public interface ChatService {
@@ -27,11 +29,14 @@ public interface ChatService {
                         Long messageId,
                         String content);
 
-        List<ChatSearchResponse> searchMessages(
+        ChatSearchPageResponse searchMessages(
                         Long userId,
                         Long coupleId,
                         String keyword,
-                        boolean useNori);
+                        boolean useNori,
+                        int size,
+                        LocalDateTime beforeSentAt,
+                        Long beforeMessageId);
 
         ChatAnnouncementResponse setAnnouncement(
                         Long userId,

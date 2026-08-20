@@ -1,8 +1,11 @@
 package com.example.couplead.chat.service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
@@ -25,23 +28,34 @@ public class ChatSearchService {
     private final MessageRepository messageRepository;
     private final ElasticsearchOperations elasticsearchOperations;
 
-    public List<MessageDocument> search(
+    public SearchResultPage search(
             Long coupleId,
             String keyword,
-            boolean useNori) {
+            boolean useNori,
+            int size,
+            LocalDateTime beforeSentAt,
+            Long beforeMessageId) {
         String trimmed = keyword == null
                 ? ""
                 : keyword.trim();
 
         if (trimmed.isEmpty()) {
-            return List.of();
+            return new SearchResultPage(
+                    List.of(),
+                    null,
+                    null,
+                    false);
         }
 
         String searchField = useNori
                 ? "content.nori"
                 : "content";
 
-        NativeQuery query = NativeQuery.builder()
+        int requestSize = Math.min(
+                Math.max(size, 1),
+                50);
+
+        NativeQueryBuilder queryBuilder = NativeQuery.builder()
                 .withQuery(
                         q -> q.bool(
                                 b -> b
@@ -55,21 +69,91 @@ public class ChatSearchService {
                                                         match -> match
                                                                 .field(searchField)
                                                                 .query(trimmed)))))
+                /*
+                 * 정렬 1:
+                 * 최신 시간 우선
+                 */
                 .withSort(
                         sort -> sort.field(
                                 field -> field
                                         .field("sentAt")
                                         .order(SortOrder.Desc)))
-                .build();
+                /*
+                 * 정렬 2:
+                 * 같은 시간일 경우 messageId가 큰 것 우선
+                 */
+                .withSort(
+                        sort -> sort.field(
+                                field -> field
+                                        .field("messageId")
+                                        .order(SortOrder.Desc)))
+                /*
+                 * 다음 페이지 존재 여부를 알아보기 위해
+                 * 요청 크기보다 1개 더 가져온다.
+                 */
+                .withMaxResults(
+                        requestSize + 1);
+
+        /*
+         * 첫 번째 검색이 아니라면
+         * 이전 페이지의 마지막 값 이후부터 검색
+         */
+        if (beforeSentAt != null &&
+                beforeMessageId != null) {
+
+            queryBuilder.withSearchAfter(
+                    List.of(
+                            beforeSentAt
+                                    .atZone(
+                                            ZoneId.of(
+                                                    "Asia/Seoul"))
+                                    .toInstant()
+                                    .toEpochMilli(),
+
+                            beforeMessageId));
+        }
+
+        NativeQuery query = queryBuilder.build();
 
         SearchHits<MessageDocument> hits = elasticsearchOperations.search(
                 query,
                 MessageDocument.class);
 
-        return hits.getSearchHits()
-                .stream()
-                .map(SearchHit::getContent)
+        List<SearchHit<MessageDocument>> searchHits = hits.getSearchHits();
+
+        boolean hasMore = searchHits.size() > requestSize;
+
+        List<SearchHit<MessageDocument>> pageHits = hasMore
+                ? searchHits.subList(
+                        0,
+                        requestSize)
+                : searchHits;
+
+        List<MessageDocument> messages = pageHits.stream()
+                .map(
+                        SearchHit::getContent)
                 .toList();
+
+        if (pageHits.isEmpty()) {
+            return new SearchResultPage(
+                    List.of(),
+                    null,
+                    null,
+                    false);
+        }
+
+        /*
+         * 이번 페이지의 마지막 메시지를
+         * 다음 페이지 cursor로 사용
+         */
+        MessageDocument lastMessage = pageHits.get(
+                pageHits.size() - 1).getContent();
+
+        return new SearchResultPage(
+                messages,
+                lastMessage.getSentAt(),
+                lastMessage.getMessageId(),
+                hasMore);
     }
 
     @Transactional
@@ -87,6 +171,8 @@ public class ChatSearchService {
                                 .id(
                                         message.getId()
                                                 .toString())
+                                .messageId(
+                                        message.getId())
                                 .coupleId(
                                         message.getCouple()
                                                 .getId())
@@ -107,5 +193,15 @@ public class ChatSearchService {
 
         messageSearchRepository.saveAll(
                 documents);
+    }
+
+    /*
+     * Elasticsearch 검색 결과 전용 내부 DTO
+     */
+    public record SearchResultPage(
+            List<MessageDocument> messages,
+            LocalDateTime nextSentAt,
+            Long nextMessageId,
+            boolean hasMore) {
     }
 }

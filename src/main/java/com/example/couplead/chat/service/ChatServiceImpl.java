@@ -17,6 +17,7 @@ import com.example.couplead.chat.domain.MessageType;
 import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryResponse;
+import com.example.couplead.chat.dto.response.ChatSearchPageResponse;
 import com.example.couplead.chat.dto.response.ChatSearchResponse;
 import com.example.couplead.chat.event.ChatAnnouncementChangedEvent;
 import com.example.couplead.chat.event.ChatMessageDeletedEvent;
@@ -396,11 +397,15 @@ public class ChatServiceImpl implements ChatService {
 
         @Override
         @Transactional(readOnly = true)
-        public List<ChatSearchResponse> searchMessages(
+        public ChatSearchPageResponse searchMessages(
                         Long userId,
                         Long coupleId,
                         String keyword,
-                        boolean useNori) {
+                        boolean useNori,
+                        int size,
+                        LocalDateTime beforeSentAt,
+                        Long beforeMessageId) {
+
                 User user = userRepository
                                 .findById(userId)
                                 .orElseThrow(
@@ -430,24 +435,37 @@ public class ChatServiceImpl implements ChatService {
                                 : keyword.trim();
 
                 if (trimmed.isEmpty()) {
-                        return List.of();
+                        return new ChatSearchPageResponse(
+                                        List.of(),
+                                        null,
+                                        null,
+                                        false);
                 }
 
-                return chatSearchService
-                                .search(
-                                                coupleId,
-                                                trimmed,
-                                                useNori)
+                ChatSearchService.SearchResultPage page = chatSearchService.search(
+                                coupleId,
+                                trimmed,
+                                useNori,
+                                size,
+                                beforeSentAt,
+                                beforeMessageId);
+
+                List<ChatSearchResponse> messages = page.messages()
                                 .stream()
                                 .map(
                                                 document -> new ChatSearchResponse(
-                                                                Long.parseLong(
-                                                                                document.getId()),
+                                                                document.getMessageId(),
                                                                 document.getSenderId(),
                                                                 document.getSenderNickname(),
                                                                 document.getContent(),
                                                                 document.getSentAt()))
                                 .toList();
+
+                return new ChatSearchPageResponse(
+                                messages,
+                                page.nextSentAt(),
+                                page.nextMessageId(),
+                                page.hasMore());
         }
 
         @Override

@@ -2,6 +2,8 @@ package com.example.couplead.chat.controller;
 
 import com.example.couplead.chat.service.ChatImageStorageService;
 import com.example.couplead.chat.service.ChatSearchService;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.http.MediaType;
@@ -18,6 +20,7 @@ import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.chat.document.MessageDocument;
 import com.example.couplead.chat.dto.response.ChatImageUploadResponse;
+import com.example.couplead.chat.dto.response.ChatSearchPageResponse;
 import com.example.couplead.chat.dto.response.ChatSearchResponse;
 import com.example.couplead.chat.service.ChatService;
 import com.example.couplead.common.response.ApiResponse;
@@ -63,12 +66,18 @@ public class ChatRestController {
         }
 
         @GetMapping("/{coupleId}/search")
-        public ApiResponse<List<ChatSearchResponse>> searchMessages(
+        public ApiResponse<ChatSearchPageResponse> searchMessages(
                         @PathVariable Long coupleId,
 
                         @RequestParam String keyword,
 
                         @RequestParam(defaultValue = "true") boolean useNori,
+
+                        @RequestParam(defaultValue = "20") int size,
+
+                        @RequestParam(required = false) LocalDateTime beforeSentAt,
+
+                        @RequestParam(required = false) Long beforeMessageId,
 
                         @AuthenticationPrincipal CustomUserDetails userDetails) {
                 return ApiResponse.success(
@@ -76,7 +85,10 @@ public class ChatRestController {
                                                 userDetails.getUser().getId(),
                                                 coupleId,
                                                 keyword,
-                                                useNori));
+                                                useNori,
+                                                size,
+                                                beforeSentAt,
+                                                beforeMessageId));
         }
 
         @DeleteMapping("/messages/{messageId}")
