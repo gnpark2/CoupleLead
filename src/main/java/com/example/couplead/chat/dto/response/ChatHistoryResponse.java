@@ -1,6 +1,6 @@
 package com.example.couplead.chat.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import com.example.couplead.chat.domain.MessageType;
 
@@ -10,12 +10,12 @@ public record ChatHistoryResponse(
                 String senderNickname,
                 MessageType type,
                 String content,
-                LocalDateTime sentAt,
-                LocalDateTime readAt,
+                Instant sentAt,
+                Instant readAt,
                 boolean deleted,
-                LocalDateTime deletedAt,
+                Instant deletedAt,
                 boolean edited,
-                LocalDateTime editedAt,
+                Instant editedAt,
                 Long replyToMessageId,
                 String replyToSenderNickname,
                 MessageType replyToType,

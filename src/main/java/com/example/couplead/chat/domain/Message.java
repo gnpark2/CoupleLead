@@ -1,6 +1,7 @@
 package com.example.couplead.chat.domain;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.Instant;
 
 import com.example.couplead.common.entity.BaseEntity;
 import com.example.couplead.couple.domain.Couple;
@@ -59,20 +60,20 @@ public class Message extends BaseEntity {
     @Builder.Default
     private boolean deleted = false;
 
-    private LocalDateTime deletedAt;
+    private Instant deletedAt;
 
     @Column(nullable = false)
-    private LocalDateTime sentAt;
+    private Instant sentAt;
 
-    private LocalDateTime readAt;
+    private Instant readAt;
 
     @Column(nullable = false)
     @Builder.Default
     private boolean edited = false;
 
-    private LocalDateTime editedAt;
+    private Instant editedAt;
 
-    public void markAsRead(LocalDateTime readAt) {
+    public void markAsRead(Instant readAt) {
         this.readAt = readAt;
     }
 
@@ -85,12 +86,12 @@ public class Message extends BaseEntity {
             String content) {
         this.content = content;
         this.edited = true;
-        this.editedAt = LocalDateTime.now();
+        this.editedAt = Instant.now();
     }
 
     public void deleteForEveryone() {
         this.deleted = true;
-        this.deletedAt = LocalDateTime.now();
+        this.deletedAt = Instant.now();
         this.content = "";
     }
 }

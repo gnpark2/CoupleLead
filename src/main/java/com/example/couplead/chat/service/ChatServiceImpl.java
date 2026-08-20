@@ -1,6 +1,10 @@
 package com.example.couplead.chat.service;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -229,7 +233,7 @@ public class ChatServiceImpl implements ChatService {
         public void markAsRead(
                         Long coupleId,
                         Long userId) {
-                LocalDateTime readAt = LocalDateTime.now();
+                Instant readAt = Instant.now();
 
                 log.info(
                                 "[CHAT READ] START coupleId={}, readerId={}",
@@ -372,12 +376,6 @@ public class ChatServiceImpl implements ChatService {
                 String trimmed = content == null
                                 ? ""
                                 : content.trim();
-
-                if (trimmed.isEmpty()) {
-                        throw new CustomException(
-                                        ErrorCode.INVALID_MESSAGE_CONTENT);
-                }
-
                 /*
                  * 기존 내용과 같으면 굳이 수정하지 않음
                  */
@@ -405,8 +403,12 @@ public class ChatServiceImpl implements ChatService {
                         String keyword,
                         boolean useNori,
                         int size,
-                        LocalDateTime beforeSentAt,
-                        Long beforeMessageId) {
+                        Instant beforeSentAt,
+                        Long beforeMessageId,
+                        Long senderId,
+                        MessageType type,
+                        LocalDate fromDate,
+                        LocalDate toDate) {
 
                 User user = userRepository
                                 .findById(userId)
@@ -422,6 +424,14 @@ public class ChatServiceImpl implements ChatService {
 
                 Couple couple = member.getCouple();
 
+                ZoneId userZone;
+
+                try {
+                        userZone = ZoneId.of(
+                                        user.getTimezone());
+                } catch (Exception e) {
+                        userZone = ZoneOffset.UTC;
+                }
                 /*
                  * 다른 커플 채팅 검색 방지
                  */
@@ -432,25 +442,18 @@ public class ChatServiceImpl implements ChatService {
                                         ErrorCode.COUPLE_NOT_FOUND);
                 }
 
-                String trimmed = keyword == null
-                                ? ""
-                                : keyword.trim();
-
-                if (trimmed.isEmpty()) {
-                        return new ChatSearchPageResponse(
-                                        List.of(),
-                                        null,
-                                        null,
-                                        false);
-                }
-
                 ChatSearchService.SearchResultPage page = chatSearchService.search(
                                 coupleId,
-                                trimmed,
+                                keyword,
                                 useNori,
                                 size,
                                 beforeSentAt,
-                                beforeMessageId);
+                                beforeMessageId,
+                                senderId,
+                                type,
+                                fromDate,
+                                toDate,
+                                userZone);
 
                 List<ChatSearchResponse> messages = page.messages()
                                 .stream()

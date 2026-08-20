@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.security.Principal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.messaging.handler.annotation.MessageMapping;
 
@@ -81,7 +81,7 @@ public class ChatWebSocketController {
                                 user.getNickname(),
                                 request.type(),
                                 request.content(),
-                                LocalDateTime.now(),
+                                Instant.now(),
                                 false,
                                 null,
                                 replyToMessage == null

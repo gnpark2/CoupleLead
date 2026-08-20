@@ -1,6 +1,6 @@
 package com.example.couplead.chat.document;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -48,8 +48,8 @@ public class MessageDocument {
     })
     private String content;
 
-    @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSS")
-    private LocalDateTime sentAt;
+    @Field(type = FieldType.Date)
+    private Instant sentAt;
 
     public void updateContent(
             String content) {

@@ -1,5 +1,6 @@
 package com.example.couplead.chat.repository;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -61,5 +62,5 @@ public interface MessageRepository
 
                         @Param("readerId") Long readerId,
 
-                        @Param("readAt") LocalDateTime readAt);
+                        @Param("readAt") Instant readAt);
 }

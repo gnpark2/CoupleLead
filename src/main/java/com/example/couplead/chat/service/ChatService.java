@@ -1,5 +1,7 @@
 package com.example.couplead.chat.service;
 
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -7,8 +9,8 @@ import java.util.Optional;
 import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.chat.dto.response.ChatSearchPageResponse;
-import com.example.couplead.chat.dto.response.ChatSearchResponse;
 import com.example.couplead.chat.dto.response.ChatUnreadBoundaryResponse;
+import com.example.couplead.chat.domain.MessageType;
 
 public interface ChatService {
         ChatHistoryPageResponse getMessages(
@@ -36,8 +38,12 @@ public interface ChatService {
                         String keyword,
                         boolean useNori,
                         int size,
-                        LocalDateTime beforeSentAt,
-                        Long beforeMessageId);
+                        Instant beforeSentAt,
+                        Long beforeMessageId,
+                        Long senderId,
+                        MessageType type,
+                        LocalDate fromDate,
+                        LocalDate toDate);
 
         ChatAnnouncementResponse setAnnouncement(
                         Long userId,

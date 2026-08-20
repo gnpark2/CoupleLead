@@ -1,9 +1,9 @@
 package com.example.couplead.chat.dto.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record ChatMessageDeletedResponse(
         Long coupleId,
         Long messageId,
-        LocalDateTime deletedAt) {
+        Instant deletedAt) {
 }

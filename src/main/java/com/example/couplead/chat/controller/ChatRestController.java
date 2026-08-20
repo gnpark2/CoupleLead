@@ -3,7 +3,8 @@ package com.example.couplead.chat.controller;
 import com.example.couplead.chat.service.ChatImageStorageService;
 import com.example.couplead.chat.service.ChatSearchService;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
 import com.example.couplead.chat.dto.response.ChatHistoryPageResponse;
 import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.chat.document.MessageDocument;
+import com.example.couplead.chat.domain.MessageType;
 import com.example.couplead.chat.dto.response.ChatImageUploadResponse;
 import com.example.couplead.chat.dto.response.ChatSearchPageResponse;
 import com.example.couplead.chat.dto.response.ChatSearchResponse;
@@ -69,16 +71,18 @@ public class ChatRestController {
         @GetMapping("/{coupleId}/search")
         public ApiResponse<ChatSearchPageResponse> searchMessages(
                         @PathVariable Long coupleId,
-
-                        @RequestParam String keyword,
-
+                        @RequestParam(defaultValue = "") String keyword,
                         @RequestParam(defaultValue = "true") boolean useNori,
-
                         @RequestParam(defaultValue = "20") int size,
-
-                        @RequestParam(required = false) LocalDateTime beforeSentAt,
-
+                        @RequestParam(required = false) Instant beforeSentAt,
                         @RequestParam(required = false) Long beforeMessageId,
+
+                        @RequestParam(required = false) Long senderId,
+
+                        @RequestParam(required = false) MessageType type,
+                        @RequestParam(required = false) LocalDate fromDate,
+
+                        @RequestParam(required = false) LocalDate toDate,
 
                         @AuthenticationPrincipal CustomUserDetails userDetails) {
                 return ApiResponse.success(
@@ -89,7 +93,11 @@ public class ChatRestController {
                                                 useNori,
                                                 size,
                                                 beforeSentAt,
-                                                beforeMessageId));
+                                                beforeMessageId,
+                                                senderId,
+                                                type,
+                                                fromDate,
+                                                toDate));
         }
 
         @DeleteMapping("/messages/{messageId}")

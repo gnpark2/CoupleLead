@@ -81,7 +81,6 @@ public class ChatMessageConsumer {
                                                 .content(message.content())
                                                 .sentAt(message.sentAt())
                                                 .clientMessageId(message.clientMessageId())
-                                                .deleted(false)
                                                 .replyToMessage(replyToMessage)
                                                 .deleted(false)
                                                 .build());
@@ -90,6 +89,7 @@ public class ChatMessageConsumer {
                 messageSearchRepository.save(
                                 MessageDocument.builder()
                                                 .id(savedMessage.getId().toString())
+                                                .messageId(savedMessage.getId())
                                                 .coupleId(couple.getId())
                                                 .senderId(sender.getId())
                                                 .senderNickname(sender.getNickname())
