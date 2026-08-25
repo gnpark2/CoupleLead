@@ -18,6 +18,7 @@ import com.example.couplead.weather.service.WeatherService;
 import com.example.couplead.widget.domain.WidgetPreference;
 import com.example.couplead.widget.dto.response.CoupleWidgetResponse;
 import com.example.couplead.widget.repository.WidgetPreferenceRepository;
+import com.example.couplead.widget.dto.response.WidgetPersonResponse;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,27 +77,84 @@ public class WidgetCacheService {
                 coupleId,
                 unreadCount);
 
+        WidgetPersonResponse meResponse = new WidgetPersonResponse(
+                parseLong(
+                        data.get("myId")),
+                data.get("myNickname"),
+                data.get("myCity"),
+                data.get("myTimezone"),
+                data.get("myLocalTime"),
+                parseDouble(
+                        data.get(
+                                "myTemperature")),
+                data.get(
+                        "myWeatherCondition"),
+                data.get(
+                        "myWeatherIcon"));
+
+        WidgetPersonResponse partnerResponse = new WidgetPersonResponse(
+                partnerId,
+                data.get(
+                        "partnerNickname"),
+                data.get(
+                        "partnerCity"),
+                data.get(
+                        "partnerTimezone"),
+                data.get(
+                        "partnerLocalTime"),
+                parseDouble(
+                        data.get(
+                                "partnerTemperature")),
+                data.get(
+                        "partnerWeatherCondition"),
+                data.get(
+                        "partnerWeatherIcon"));
+
         return new CoupleWidgetResponse(
                 coupleId,
                 partnerId,
-                parseInteger(data.get("daysTogether")),
-                parseLong(data.get("anniversaryId")),
-                data.get("anniversaryTitle"),
-                data.get("anniversaryDate"),
-                parseInteger(data.get("anniversaryDDay")),
-                data.get("partnerNickname"),
-                data.get("partnerProfileImage"),
-                Boolean.parseBoolean(data.getOrDefault("partnerOnline", "false")),
+                parseInteger(
+                        data.get(
+                                "daysTogether")),
+                parseLong(
+                        data.get(
+                                "anniversaryId")),
+                data.get(
+                        "anniversaryTitle"),
+                data.get(
+                        "anniversaryDate"),
+                parseInteger(
+                        data.get(
+                                "anniversaryDDay")),
+                data.get(
+                        "partnerNickname"),
+                data.get(
+                        "partnerProfileImage"),
+                Boolean.parseBoolean(
+                        data.getOrDefault(
+                                "partnerOnline",
+                                "false")),
                 partnerTyping,
-                data.get("partnerLastSeen"),
+                data.get(
+                        "partnerLastSeen"),
                 unreadCount,
-                data.get("partnerCity"),
-                data.get("partnerTimezone"),
-                data.get("partnerLocalTime"),
-                parseDouble(data.get("temperature")),
-                data.get("weatherCondition"),
-                data.get("weatherIcon"),
-                data.get("lastMessageAt"));
+                data.get(
+                        "partnerCity"),
+                data.get(
+                        "partnerTimezone"),
+                data.get(
+                        "partnerLocalTime"),
+                parseDouble(
+                        data.get(
+                                "temperature")),
+                data.get(
+                        "weatherCondition"),
+                data.get(
+                        "weatherIcon"),
+                data.get(
+                        "lastMessageAt"),
+                meResponse,
+                partnerResponse);
     }
 
     @Transactional
@@ -122,7 +180,11 @@ public class WidgetCacheService {
 
         AnniversaryWidgetData anniversaryData = calculateAnniversary(anniversary);
 
-        WeatherResponse weather = weatherService.getCurrentWeather(
+        WeatherResponse myWeather = weatherService.getCurrentWeather(
+                me.getLatitude(),
+                me.getLongitude());
+
+        WeatherResponse partnerWeather = weatherService.getCurrentWeather(
                 partner.getLatitude(),
                 partner.getLongitude());
 
@@ -136,6 +198,20 @@ public class WidgetCacheService {
 
         Map<String, String> cache = new HashMap<>();
 
+        cache.put("myId", me.getId().toString());
+        cache.put("myNickname", value(me.getNickname()));
+        cache.put("myCity", value(me.getCity()));
+        cache.put("myTimezone", value(me.getTimezone()));
+        cache.put("myLocalTime", value(getLocalTime(me.getTimezone())));
+        cache.put("myTemperature", myWeather == null || myWeather.temperature() == null
+                ? ""
+                : myWeather.temperature().toString());
+        cache.put("myWeatherCondition", myWeather == null
+                ? ""
+                : value(myWeather.condition()));
+        cache.put("myWeatherIcon", myWeather == null
+                ? ""
+                : value(myWeather.icon()));
         cache.put("daysTogether", String.valueOf(daysTogether));
         cache.put("anniversaryId", anniversaryData.id());
         cache.put("anniversaryTitle", anniversaryData.title());
@@ -151,10 +227,15 @@ public class WidgetCacheService {
         cache.put("partnerCity", value(partner.getCity()));
         cache.put("partnerTimezone", value(partner.getTimezone()));
         cache.put("partnerLocalTime", value(getLocalTime(partner.getTimezone())));
-        cache.put("temperature",
-                weather == null || weather.temperature() == null ? "" : weather.temperature().toString());
-        cache.put("weatherCondition", weather == null ? "" : value(weather.condition()));
-        cache.put("weatherIcon", weather == null ? "" : value(weather.icon()));
+        cache.put("partnerTemperature", partnerWeather == null || partnerWeather.temperature() == null
+                ? ""
+                : partnerWeather.temperature().toString());
+        cache.put("partnerWeatherCondition", partnerWeather == null
+                ? ""
+                : value(partnerWeather.condition()));
+        cache.put("partnerWeatherIcon", partnerWeather == null
+                ? ""
+                : value(partnerWeather.icon()));
         cache.put("lastMessageAt", value(lastMessageAt));
         cache.put("updatedAt", LocalDateTime.now().toString());
 

@@ -1,33 +1,36 @@
 package com.example.couplead.widget.dto.response;
 
 public record CoupleWidgetResponse(
-        Long coupleId,
+                Long coupleId,
 
-        Long partnerId,
+                Long partnerId,
 
-        Integer daysTogether,
+                Integer daysTogether,
 
-        Long anniversaryId,
-        String anniversaryTitle,
-        String anniversaryDate,
-        Integer anniversaryDDay,
+                Long anniversaryId,
+                String anniversaryTitle,
+                String anniversaryDate,
+                Integer anniversaryDDay,
 
-        String partnerNickname,
-        String partnerProfileImage,
+                String partnerNickname,
+                String partnerProfileImage,
 
-        boolean partnerOnline,
-        boolean partnerTyping,
-        String partnerLastSeen,
+                boolean partnerOnline,
+                boolean partnerTyping,
+                String partnerLastSeen,
 
-        Long unreadCount,
+                Long unreadCount,
 
-        String partnerCity,
-        String partnerTimezone,
-        String partnerLocalTime,
+                String partnerCity,
+                String partnerTimezone,
+                String partnerLocalTime,
 
-        Double temperature,
-        String weatherCondition,
-        String weatherIcon,
+                Double temperature,
+                String weatherCondition,
+                String weatherIcon,
 
-        String lastMessageAt) {
+                String lastMessageAt,
+
+                WidgetPersonResponse me,
+                WidgetPersonResponse partner) {
 }
