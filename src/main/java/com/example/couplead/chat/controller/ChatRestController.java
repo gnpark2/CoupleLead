@@ -22,10 +22,13 @@ import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.chat.document.MessageDocument;
 import com.example.couplead.chat.domain.MessageType;
 import com.example.couplead.chat.dto.response.ChatImageUploadResponse;
+import com.example.couplead.chat.dto.response.ChatImagesUploadResponse;
 import com.example.couplead.chat.dto.response.ChatSearchPageResponse;
 import com.example.couplead.chat.dto.response.ChatSearchResponse;
 import com.example.couplead.chat.dto.response.ChatUnreadBoundaryResponse;
 import com.example.couplead.chat.service.ChatService;
+import com.example.couplead.common.exception.CustomException;
+import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.common.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -98,6 +101,42 @@ public class ChatRestController {
                                                 type,
                                                 fromDate,
                                                 toDate));
+        }
+
+        @PostMapping(value = "/{coupleId}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ApiResponse<ChatImagesUploadResponse> uploadChatImages(
+                        @PathVariable Long coupleId,
+                        @RequestPart("files") List<MultipartFile> files,
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+                if (files == null || files.isEmpty()) {
+                        throw new CustomException(
+                                        ErrorCode.INVALID_REQUEST);
+                }
+
+                if (files.size() > 10) {
+                        throw new CustomException(
+                                        ErrorCode.INVALID_REQUEST);
+                }
+
+                /*
+                 * 기존에 couple 접근 권한 검증 메서드가 있다면
+                 * 반드시 여기서 호출
+                 */
+                chatService.validateCoupleMember(
+                                userDetails.getUser().getId(),
+                                coupleId);
+
+                List<String> urls = chatImageStorageService.saveAll(
+                                files);
+
+                List<ChatImageUploadResponse> images = urls.stream()
+                                .map(ChatImageUploadResponse::new)
+                                .toList();
+
+                return ApiResponse.success(
+                                new ChatImagesUploadResponse(
+                                                images));
         }
 
         @DeleteMapping("/messages/{messageId}")

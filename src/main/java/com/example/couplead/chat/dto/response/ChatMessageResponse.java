@@ -20,5 +20,7 @@ public record ChatMessageResponse(
                 String replyToSenderNickname,
                 MessageType replyToType,
                 String replyToContent,
-                String clientMessageId) {
+                String clientMessageId,
+
+                String mediaGroupId) {
 }

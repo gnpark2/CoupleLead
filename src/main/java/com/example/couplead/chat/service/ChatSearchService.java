@@ -255,6 +255,8 @@ public class ChatSearchService {
                                                                                 message.getContent())
                                                                 .sentAt(
                                                                                 message.getSentAt())
+                                                                .mediaGroupId(
+                                                                                message.getMediaGroupId())
                                                                 .build())
                                 .toList();
 

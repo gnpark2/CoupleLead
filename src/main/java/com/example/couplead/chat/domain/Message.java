@@ -77,10 +77,11 @@ public class Message extends BaseEntity {
         this.readAt = readAt;
     }
 
-    @Column(name = "client_message_id",
-        unique = true
-    )
+    @Column(name = "client_message_id", unique = true)
     private String clientMessageId;
+
+    @Column(name = "media_group_id", length = 36)
+    private String mediaGroupId;
 
     public void editContent(
             String content) {

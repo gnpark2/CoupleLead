@@ -82,6 +82,7 @@ public class ChatMessageConsumer {
                                                 .sentAt(message.sentAt())
                                                 .clientMessageId(message.clientMessageId())
                                                 .replyToMessage(replyToMessage)
+                                                .mediaGroupId(message.mediaGroupId())
                                                 .deleted(false)
                                                 .build());
 
@@ -95,6 +96,7 @@ public class ChatMessageConsumer {
                                                 .senderNickname(sender.getNickname())
                                                 .type(savedMessage.getType())
                                                 .content(savedMessage.getContent())
+                                                .mediaGroupId(savedMessage.getMediaGroupId())
                                                 .sentAt(savedMessage.getSentAt())
                                                 .build());
 

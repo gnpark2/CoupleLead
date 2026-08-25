@@ -7,5 +7,6 @@ public record ChatMessageRequest(
                 MessageType type,
                 String content,
                 Long replyToMessageId,
-                String clientMessageId) {
+                String clientMessageId,
+                String mediaGroupId) {
 }

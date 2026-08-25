@@ -51,6 +51,9 @@ public class MessageDocument {
     @Field(type = FieldType.Date)
     private Instant sentAt;
 
+    @Field(type = FieldType.Keyword)
+    private String mediaGroupId;
+
     public void updateContent(
             String content) {
         this.content = content;

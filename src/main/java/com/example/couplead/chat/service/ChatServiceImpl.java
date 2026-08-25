@@ -210,7 +210,8 @@ public class ChatServiceImpl implements ChatService {
                                                                                         : reply.getContent(),
 
                                                         // 추가
-                                                        message.getClientMessageId());
+                                                        message.getClientMessageId(),
+                                                        message.getMediaGroupId());
                                 })
                                 .toList();
 
@@ -691,5 +692,31 @@ public class ChatServiceImpl implements ChatService {
                                                 ? null
                                                 : firstUnread.getId(),
                                 unreadCount);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public void validateCoupleMember(
+                        Long userId,
+                        Long coupleId) {
+                User user = userRepository
+                                .findById(userId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.USER_NOT_FOUND));
+
+                CoupleMember member = coupleMemberRepository
+                                .findByUser(user)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                if (!member.getCouple()
+                                .getId()
+                                .equals(coupleId)) {
+
+                        throw new CustomException(
+                                        ErrorCode.COUPLE_NOT_FOUND);
+                }
         }
 }

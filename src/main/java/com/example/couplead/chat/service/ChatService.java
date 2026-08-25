@@ -61,4 +61,8 @@ public interface ChatService {
         ChatUnreadBoundaryResponse getUnreadBoundary(
                         Long userId,
                         Long coupleId);
+
+        void validateCoupleMember(
+                        Long userId,
+                        Long coupleId);
 }

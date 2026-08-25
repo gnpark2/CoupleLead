@@ -106,7 +106,8 @@ public class ChatWebSocketController {
                                                                                 ? "삭제된 메시지입니다."
                                                                                 : replyToMessage
                                                                                                 .getContent(),
-                                request.clientMessageId());
+                                request.clientMessageId(),
+                                request.mediaGroupId());
 
                 chatEventProducer.publish(message);
         }

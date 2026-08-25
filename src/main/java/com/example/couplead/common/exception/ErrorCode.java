@@ -22,7 +22,8 @@ public enum ErrorCode {
     MESSAGE_DELETE_FORBIDDEN( HttpStatus.FORBIDDEN, "본인이 보낸 메시지만 삭제할 수 있습니다."),
     MESSAGE_EDIT_FORBIDDEN( HttpStatus.FORBIDDEN, "본인이 보낸 메시지만 수정할 수 있습니다."),
     MESSAGE_EDIT_NOT_ALLOWED( HttpStatus.BAD_REQUEST, "텍스트 메시지만 수정할 수 있습니다."),
-    INVALID_MESSAGE_CONTENT( HttpStatus.BAD_REQUEST, "메시지 내용이 비어 있습니다.");
+    INVALID_MESSAGE_CONTENT( HttpStatus.BAD_REQUEST, "메시지 내용이 비어 있습니다."),
+    INVALID_REQUEST( HttpStatus.BAD_REQUEST, "파일이 없거나 너무 큽니다.");
 
     private final int status;
     private final String message;
