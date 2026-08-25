@@ -9,17 +9,16 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record CreateAnniversaryRequest(
-    @NotBlank
-    String title,
 
-    @NotNull
-    LocalDate anniversaryDate,
+        String title,
 
-    @NotNull
-    AnniversaryType type,
+        LocalDate anniversaryDate,
 
-    @NotNull
-    RepeatType repeatType
+        AnniversaryType type,
+
+        RepeatType repeatType,
+
+        String customTypeName
+
 ) {
-    
 }

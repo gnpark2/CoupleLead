@@ -8,23 +8,25 @@ import com.example.couplead.anniversary.dto.response.AnniversaryResponse;
 
 public interface AnniversaryService {
     AnniversaryResponse create(
-        Long userId,
-        CreateAnniversaryRequest request
-    );
+            Long userId,
+            CreateAnniversaryRequest request);
 
     List<AnniversaryResponse> getAll(
-        Long userId
-    );
+            Long userId);
 
     void delete(
-        Long userId,
-        Long anniversaryId
-    );
+            Long userId,
+            Long anniversaryId);
 
     AnniversaryResponse update(
-        Long userId,
-        Long anniversaryId,
-        UpdateAnniversaryRequest request
-    );
+            Long userId,
+            Long anniversaryId,
+            UpdateAnniversaryRequest request);
 
+    List<AnniversaryResponse> getHomeAnniversaries(
+            Long userId);
+
+    List<AnniversaryResponse> updateHomeAnniversaries(
+            Long userId,
+            List<Long> anniversaryIds);
 }

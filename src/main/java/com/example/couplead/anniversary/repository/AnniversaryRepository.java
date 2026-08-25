@@ -12,7 +12,10 @@ public interface AnniversaryRepository extends JpaRepository<Anniversary, Long> 
     List<Anniversary> findByCoupleOrderByAnniversaryDateAsc(Couple couple);
 
     Optional<Anniversary> findByIdAndCouple(
-        Long id,
-        Couple couple
-    );
+            Long id,
+            Couple couple);
+
+    List<Anniversary> findAllByIdInAndCouple(
+            List<Long> ids,
+            Couple couple);
 }

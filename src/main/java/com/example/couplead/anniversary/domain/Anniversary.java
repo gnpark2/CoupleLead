@@ -34,10 +34,7 @@ public class Anniversary extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-        name = "couple_id",
-        nullable = false
-    )
+    @JoinColumn(name = "couple_id", nullable = false)
     private Couple couple;
 
     @Column(nullable = false, length = 50)
@@ -54,15 +51,19 @@ public class Anniversary extends BaseEntity {
     @Column(nullable = false)
     private RepeatType repeatType;
 
+    @Column(name = "custom_type_name", length = 30)
+    private String customTypeName;
+
     public void update(
-        String title,
-        LocalDate anniversaryDate,
-        AnniversaryType type,
-        RepeatType repeatType
-    ) {
+            String title,
+            LocalDate anniversaryDate,
+            AnniversaryType type,
+            RepeatType repeatType,
+            String customTypeName) {
         this.title = title;
-        this.anniversaryDate =anniversaryDate;
+        this.anniversaryDate = anniversaryDate;
         this.type = type;
         this.repeatType = repeatType;
+        this.customTypeName = customTypeName;
     }
 }

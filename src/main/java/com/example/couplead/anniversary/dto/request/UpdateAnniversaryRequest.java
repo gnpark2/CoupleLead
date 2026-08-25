@@ -19,7 +19,9 @@ public record UpdateAnniversaryRequest (
     AnniversaryType type,
 
     @NotNull
-    RepeatType repeatType
+    RepeatType repeatType,
+
+    String customTypeName
 ) {
 
 }

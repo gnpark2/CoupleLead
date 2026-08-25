@@ -25,34 +25,27 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Table(
-    name = "widget_preferences",
-    uniqueConstraints = {
-        @UniqueConstraint(
-            name = "uk_widget_preference_user",
-            columnNames = "user_id"
-        )
-    }
-)
+@Table(name = "widget_preferences", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_widget_preference_user", columnNames = "user_id")
+})
 public class WidgetPreference extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-        name = "user_id",
-        nullable = false
-    )
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(
-        name = "selected_anniversary_id"
-    )
+    @JoinColumn(name = "selected_anniversary_id")
     private Anniversary selectedAnniversary;
 
     public void selectAnniversary(Anniversary anniversary) {
         this.selectedAnniversary = anniversary;
+    }
+
+    public void clearSelectedAnniversary() {
+        this.selectedAnniversary = null;
     }
 }
