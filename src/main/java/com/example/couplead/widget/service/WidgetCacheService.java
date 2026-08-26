@@ -5,6 +5,8 @@ import com.example.couplead.anniversary.domain.RepeatType;
 import com.example.couplead.anniversary.repository.AnniversaryRepository;
 import com.example.couplead.chat.domain.Message;
 import com.example.couplead.chat.repository.MessageRepository;
+import com.example.couplead.common.exception.CustomException;
+import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.couple.domain.Couple;
 import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
@@ -19,6 +21,7 @@ import com.example.couplead.widget.domain.WidgetPreference;
 import com.example.couplead.widget.dto.response.CoupleWidgetResponse;
 import com.example.couplead.widget.repository.WidgetPreferenceRepository;
 import com.example.couplead.widget.dto.response.WidgetPersonResponse;
+import com.example.couplead.anniversary.util.AnniversaryDateUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -159,8 +162,17 @@ public class WidgetCacheService {
 
     @Transactional
     public void updateCache(Long coupleId, Long myUserId) {
-        Couple couple = coupleRepository.findById(coupleId).orElseThrow();
-        User me = userRepository.findById(myUserId).orElseThrow();
+        Couple couple = coupleRepository
+                .findById(coupleId)
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.COUPLE_NOT_FOUND));
+
+        User me = userRepository
+                .findById(myUserId)
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.USER_NOT_FOUND));
         User partner = getPartner(couple, myUserId);
 
         // Long unreadCount = messageRepository
@@ -246,9 +258,17 @@ public class WidgetCacheService {
     public void selectAnniversary(
             Long userId,
             Long anniversaryId) {
-        User user = userRepository.findById(userId).orElseThrow();
+        User user = userRepository
+                .findById(userId)
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.USER_NOT_FOUND));
 
-        CoupleMember member = coupleMemberRepository.findByUser(user).orElseThrow();
+        CoupleMember member = coupleMemberRepository
+                .findByUser(user)
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.COUPLE_NOT_FOUND));
 
         Couple couple = member.getCouple();
 
@@ -270,8 +290,11 @@ public class WidgetCacheService {
 
     @Transactional(readOnly = true)
     public void invalidateByCouple(Long coupleId) {
-        Couple couple = coupleRepository.findById(coupleId)
-                .orElseThrow();
+        Couple couple = coupleRepository
+                .findById(coupleId)
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.COUPLE_NOT_FOUND));
 
         coupleMemberRepository.findByCoupleWithUser(couple)
                 .stream()
@@ -305,7 +328,8 @@ public class WidgetCacheService {
                 LocalDate.now());
     }
 
-    private AnniversaryWidgetData calculateAnniversary(Anniversary anniversary) {
+    private AnniversaryWidgetData calculateAnniversary(
+            Anniversary anniversary) {
         if (anniversary == null) {
             return new AnniversaryWidgetData(
                     "",
@@ -316,30 +340,19 @@ public class WidgetCacheService {
 
         LocalDate date = anniversary.getAnniversaryDate();
 
-        long dDay;
-
-        if (anniversary.getRepeatType() == RepeatType.YEARLY) {
-            LocalDate nextDate = date.withYear(LocalDate.now().getYear());
-
-            if (nextDate.isBefore(LocalDate.now())) {
-                nextDate = nextDate.plusYears(1);
-            }
-
-            dDay = ChronoUnit.DAYS.between(LocalDate.now(), nextDate);
-        } else {
-            dDay = ChronoUnit.DAYS.between(LocalDate.now(), date);
-        }
+        long dDay = AnniversaryDateUtils.calculateDDay(
+                date,
+                anniversary.getRepeatType());
 
         return new AnniversaryWidgetData(
                 anniversary
                         .getId()
                         .toString(),
-
-                value(anniversary.getTitle()),
-
+                value(
+                        anniversary.getTitle()),
                 date.toString(),
-
-                String.valueOf(dDay));
+                String.valueOf(
+                        dDay));
     }
 
     private String getLocalTime(String timezone) {

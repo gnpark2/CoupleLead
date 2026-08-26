@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ import com.example.couplead.couple.domain.CoupleStatus;
 import com.example.couplead.couple.dto.request.ConnectRequest;
 import com.example.couplead.couple.dto.response.CoupleResponse;
 import com.example.couplead.couple.dto.response.InviteCodeResponse;
+import com.example.couplead.couple.event.CoupleConnectedEvent;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
 import com.example.couplead.couple.repository.CoupleRepository;
 import com.example.couplead.user.domain.User;
@@ -35,6 +37,7 @@ public class CoupleServiceImpl implements CoupleService {
     private final CoupleRepository coupleRepository;
     private final UserRepository userRepository;
     private final CoupleMemberRepository coupleMemberRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public InviteCodeResponse createInviteCode(Long userId) {
@@ -94,6 +97,12 @@ public class CoupleServiceImpl implements CoupleService {
                         .role(CoupleRole.SECOND)
                         .build());
 
+        eventPublisher.publishEvent(
+                new CoupleConnectedEvent(
+                        couple.getId(),
+                        owner.getId(),
+                        partner.getId()));
+
         redisTemplate.delete(key);
     }
 
@@ -133,8 +142,7 @@ public class CoupleServiceImpl implements CoupleService {
                 partner.getCountry(),
                 partner.getTimezone(),
                 couple.getConnectedAt(),
-                daysTogether
-            );
+                daysTogether);
     }
 
     @Override

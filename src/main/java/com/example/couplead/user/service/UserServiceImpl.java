@@ -5,7 +5,6 @@ import com.example.couplead.auth.dto.response.SignupResponse;
 import com.example.couplead.common.exception.CustomException;
 import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
-import com.example.couplead.event.producer.WidgetRefreshProducer;
 import com.example.couplead.user.domain.Provider;
 import com.example.couplead.user.domain.Role;
 import com.example.couplead.user.domain.User;
@@ -28,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
         private final UserRepository userRepository;
         private final PasswordEncoder passwordEncoder;
-        private final WidgetRefreshProducer widgetRefreshProducer;
         private final CoupleMemberRepository coupleMemberRepository;
         private final ApplicationEventPublisher eventPublisher;
 
