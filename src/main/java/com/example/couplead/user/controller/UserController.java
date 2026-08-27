@@ -1,7 +1,5 @@
 package com.example.couplead.user.controller;
 
-import java.util.Map;
-
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -39,6 +37,17 @@ public class UserController {
                         @AuthenticationPrincipal CustomUserDetails userDetails) {
                 return ApiResponse.success(
                                 UserMeResponse.from(userDetails.getUser()));
+        }
+
+        @DeleteMapping("/me")
+        public ApiResponse<Void> withdraw(
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+                userService.withdraw(
+                                userDetails
+                                                .getUser()
+                                                .getId());
+
+                return ApiResponse.success();
         }
 
         @PatchMapping("/me/profile")

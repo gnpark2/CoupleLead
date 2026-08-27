@@ -1,7 +1,6 @@
 package com.example.couplead.widget.service;
 
 import com.example.couplead.anniversary.domain.Anniversary;
-import com.example.couplead.anniversary.domain.RepeatType;
 import com.example.couplead.anniversary.repository.AnniversaryRepository;
 import com.example.couplead.chat.domain.Message;
 import com.example.couplead.chat.repository.MessageRepository;

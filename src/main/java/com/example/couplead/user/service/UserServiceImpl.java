@@ -5,6 +5,7 @@ import com.example.couplead.auth.dto.response.SignupResponse;
 import com.example.couplead.common.exception.CustomException;
 import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
+import com.example.couplead.couple.service.CoupleService;
 import com.example.couplead.user.domain.Provider;
 import com.example.couplead.user.domain.Role;
 import com.example.couplead.user.domain.User;
@@ -29,6 +30,7 @@ public class UserServiceImpl implements UserService {
         private final PasswordEncoder passwordEncoder;
         private final CoupleMemberRepository coupleMemberRepository;
         private final ApplicationEventPublisher eventPublisher;
+        private final CoupleService coupleService;
 
         private Long getCoupleId(User user) {
                 return coupleMemberRepository
@@ -58,6 +60,36 @@ public class UserServiceImpl implements UserService {
                                 savedUser.getId(),
                                 savedUser.getEmail(),
                                 savedUser.getNickname());
+        }
+
+        @Override
+        @Transactional
+        public void withdraw(
+                        Long userId) {
+                User user = userRepository
+                                .findById(userId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.USER_NOT_FOUND));
+
+                /*
+                 * 현재 커플이 존재하면
+                 * 먼저 커플 해제
+                 */
+                if (coupleMemberRepository
+                                .existsByUser(user)) {
+
+                        coupleService.disconnect(
+                                        userId);
+                }
+
+                /*
+                 * 여기에 User FK를 참조하는
+                 * 데이터 정리 로직 추가
+                 */
+
+                userRepository.delete(
+                                user);
         }
 
         @Override

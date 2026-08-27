@@ -20,10 +20,12 @@ import com.example.couplead.couple.dto.request.ConnectRequest;
 import com.example.couplead.couple.dto.response.CoupleResponse;
 import com.example.couplead.couple.dto.response.InviteCodeResponse;
 import com.example.couplead.couple.event.CoupleConnectedEvent;
+import com.example.couplead.couple.event.CoupleDisconnectedEvent;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
 import com.example.couplead.couple.repository.CoupleRepository;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
+import com.example.couplead.widget.service.WidgetCacheService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,6 +40,7 @@ public class CoupleServiceImpl implements CoupleService {
     private final UserRepository userRepository;
     private final CoupleMemberRepository coupleMemberRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final WidgetCacheService widgetCacheService;
 
     @Override
     public InviteCodeResponse createInviteCode(Long userId) {
@@ -146,8 +149,75 @@ public class CoupleServiceImpl implements CoupleService {
     }
 
     @Override
-    public void disconnect(Long userId) {
-        throw new UnsupportedOperationException();
+    public void disconnect(
+            Long userId) {
+        User me = userRepository
+                .findById(userId)
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.USER_NOT_FOUND));
+
+        CoupleMember myMember = coupleMemberRepository
+                .findByUser(me)
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.COUPLE_NOT_FOUND));
+
+        Couple couple = myMember.getCouple();
+
+        var members = coupleMemberRepository
+                .findByCoupleWithUser(
+                        couple);
+
+        CoupleMember partnerMember = members.stream()
+                .filter(
+                        member -> !member
+                                .getUser()
+                                .getId()
+                                .equals(
+                                        userId))
+                .findFirst()
+                .orElseThrow(
+                        () -> new CustomException(
+                                ErrorCode.COUPLE_NOT_FOUND));
+
+        Long partnerUserId = partnerMember
+                .getUser()
+                .getId();
+
+        Long coupleId = couple.getId();
+
+        /*
+         * 기존 위젯 캐시 제거
+         */
+        widgetCacheService
+                .invalidateByCouple(
+                        coupleId);
+
+        /*
+         * 커플 연결 종료
+         */
+        couple.disconnect();
+
+        /*
+         * 현재 활성 연결을 끊기 위해
+         * CoupleMember 삭제
+         */
+        coupleMemberRepository
+                .deleteAll(
+                        members);
+
+        /*
+         * Couple은 삭제하지 않는다.
+         * JPA Dirty Checking으로
+         * DISCONNECTED 상태 저장
+         */
+
+        eventPublisher.publishEvent(
+                new CoupleDisconnectedEvent(
+                        coupleId,
+                        userId,
+                        partnerUserId));
     }
 
     private String generateCode() {

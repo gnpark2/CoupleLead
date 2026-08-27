@@ -20,7 +20,6 @@ import com.example.couplead.couple.repository.CoupleMemberRepository;
 import com.example.couplead.event.producer.WidgetRefreshProducer;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
-import com.example.couplead.widget.domain.WidgetPreference;
 import com.example.couplead.widget.repository.WidgetPreferenceRepository;
 import com.example.couplead.widget.service.WidgetCacheService;
 

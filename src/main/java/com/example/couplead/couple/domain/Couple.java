@@ -26,11 +26,19 @@ public class Couple extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false)
     private LocalDate connectedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CoupleStatus status;
+
+    private LocalDate disconnectedAt;
+
+    public void disconnect() {
+        this.status = CoupleStatus.DISCONNECTED;
+
+        this.disconnectedAt = LocalDate.now();
+    }
 }

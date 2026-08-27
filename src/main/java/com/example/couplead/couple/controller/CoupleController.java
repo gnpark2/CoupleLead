@@ -15,9 +15,8 @@ import com.example.couplead.couple.service.CoupleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-
-
 
 @RestController
 @RequiredArgsConstructor
@@ -31,7 +30,8 @@ public class CoupleController {
     }
 
     @PostMapping("/connect")
-    public ApiResponse<Void> connect(@AuthenticationPrincipal CustomUserDetails userDetails, @Valid @RequestBody ConnectRequest request) {
+    public ApiResponse<Void> connect(@AuthenticationPrincipal CustomUserDetails userDetails,
+            @Valid @RequestBody ConnectRequest request) {
         coupleService.connect(userDetails.getUser().getId(), request);
         return ApiResponse.success();
     }
@@ -39,5 +39,16 @@ public class CoupleController {
     @GetMapping("/me")
     public ApiResponse<CoupleResponse> getMyCouple(@AuthenticationPrincipal CustomUserDetails userDetails) {
         return ApiResponse.success(coupleService.getMyCouple(userDetails.getUser().getId()));
+    }
+
+    @DeleteMapping("/me")
+    public ApiResponse<Void> disconnect(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        coupleService.disconnect(
+                userDetails
+                        .getUser()
+                        .getId());
+
+        return ApiResponse.success();
     }
 }

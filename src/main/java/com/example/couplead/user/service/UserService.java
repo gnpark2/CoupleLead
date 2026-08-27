@@ -9,6 +9,8 @@ import com.example.couplead.user.dto.response.UserProfileResponse;
 public interface UserService {
         SignupResponse signup(SignupRequest request);
 
+        void withdraw(Long userId);
+
         UserProfileResponse updateProfile(
                         Long userId,
                         UpdateProfileRequest request);
