@@ -113,10 +113,10 @@ Authorization: Bearer {{accessToken}}
 Content-Type: application/json
 
 {
-  "title": "두번째 테스트",
+  "title": "세번째 테스트",
   "type": "BIRTHDAY",
   "repeatType": "YEARLY",
-  "anniversaryDate": "2023-08-05"
+  "anniversaryDate": "2024-09-04"
 }
 
 ### 기념일 조회
