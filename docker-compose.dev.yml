@@ -13,7 +13,6 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      TZ: Asia/Seoul
 
     command:
       - --character-set-server=utf8mb4
@@ -161,6 +160,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
 
+      MYSQL_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?serverTimezone=UTC
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
@@ -178,8 +178,6 @@ services:
       LIVEKIT_URL: ${LIVEKIT_URL}
       LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
       LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
-
-      TZ: Asia/Seoul
 
     ports:
       - "8080:8080"

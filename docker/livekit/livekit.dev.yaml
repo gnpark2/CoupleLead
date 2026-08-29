@@ -9,4 +9,4 @@ rtc:
   use_external_ip: true
 
 keys:
-  devkey: devsecret
+  devkey: 97ca81d1a9a77fa702733de5cae0593304d3bbf31fa44745932e52637c47923b
