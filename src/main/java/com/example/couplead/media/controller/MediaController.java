@@ -66,4 +66,12 @@ public class MediaController {
                 return ApiResponse.success();
         }
 
+        @PostMapping("/leave")
+        public ApiResponse<Void> leave(
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+                mediaService.leave(userDetails.getUser().getId());
+
+                return ApiResponse.success(null);
+        }
+
 }

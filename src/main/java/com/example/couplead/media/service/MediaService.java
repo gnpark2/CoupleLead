@@ -22,4 +22,6 @@ public interface MediaService {
         Long userId,
         MediaCallActionRequest request
     );
+
+    void leave(Long userId);
 }

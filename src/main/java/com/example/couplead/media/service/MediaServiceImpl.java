@@ -10,8 +10,10 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.example.couplead.common.exception.CustomException;
 import com.example.couplead.common.exception.ErrorCode;
+import com.example.couplead.couple.domain.Couple;
 import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
+import com.example.couplead.couple.repository.CoupleRepository;
 import com.example.couplead.media.dto.request.MediaCallActionRequest;
 import com.example.couplead.media.dto.response.MediaInviteResponse;
 import com.example.couplead.media.dto.response.MediaTokenResponse;
@@ -33,6 +35,7 @@ public class MediaServiceImpl
         private final UserRepository userRepository;
         private final CoupleMemberRepository coupleMemberRepository;
         private final SimpMessagingTemplate messagingTemplate;
+        private final CoupleRepository coupleRepository;
 
         @Value("${livekit.url}")
         private String livekitUrl;
@@ -186,12 +189,11 @@ public class MediaServiceImpl
 
         @Override
         public void reject(
-                Long userId,
-                MediaCallActionRequest request
-        ) {
+                        Long userId,
+                        MediaCallActionRequest request) {
                 User me = userRepository
-                        .findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                                .findById(userId)
+                                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
                 User partner = getPartner(me);
 
@@ -199,19 +201,72 @@ public class MediaServiceImpl
                         throw new CustomException(ErrorCode.ACCESS_DENIED);
                 }
 
-        Map<String, Object> payload =
-                Map.of(
-                        "type",
-                        "MEDIA_REJECTED",
+                Map<String, Object> payload = Map.of(
+                                "type",
+                                "MEDIA_REJECTED",
 
-                        "callId",
-                        request.callId(),
+                                "callId",
+                                request.callId(),
 
-                        "userId",
-                        me.getId()
-                );
+                                "userId",
+                                me.getId());
 
-        messagingTemplate.convertAndSend("/topic/media/user/" + partner.getId(), payload);
+                messagingTemplate.convertAndSend("/topic/media/user/" + partner.getId(), payload);
 
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public void leave(Long userId) {
+                User me = userRepository
+                                .findById(userId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.USER_NOT_FOUND));
+
+                /*
+                 * 현재 유저의 CoupleMember 조회
+                 */
+                CoupleMember myMember = coupleMemberRepository
+                                .findByUser(me)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                Couple couple = myMember.getCouple();
+
+                /*
+                 * 같은 커플의 멤버 전체 조회
+                 */
+                var members = coupleMemberRepository
+                                .findByCoupleWithUser(couple);
+
+                /*
+                 * 나를 제외한 상대방 찾기
+                 */
+                CoupleMember partnerMember = members
+                                .stream()
+                                .filter(
+                                                member -> !member
+                                                                .getUser()
+                                                                .getId()
+                                                                .equals(userId))
+                                .findFirst()
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                Long partnerUserId = partnerMember
+                                .getUser()
+                                .getId();
+
+                /*
+                 * 상대방에게 미디어 룸 종료 이벤트 전송
+                 */
+                messagingTemplate.convertAndSend(
+                                "/topic/media/user/" + partnerUserId,
+                                Map.of(
+                                                "type", "MEDIA_LEFT",
+                                                "userId", userId));
         }
 }
