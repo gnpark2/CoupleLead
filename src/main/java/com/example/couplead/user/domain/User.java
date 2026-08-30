@@ -3,6 +3,7 @@ package com.example.couplead.user.domain;
 import com.example.couplead.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Entity
@@ -23,6 +24,7 @@ public class User extends BaseEntity {
     private String email;
 
     @Column(nullable = false)
+    @Size(min = 8, max = 100, message = "비밀번호는 8자 이상이어야 합니다.")
     private String password;
 
     @Column(nullable = false)
@@ -75,5 +77,10 @@ public class User extends BaseEntity {
 
     public void removeProfileImage() {
         this.profileImage = null;
+    }
+
+    public void changePassword(
+            String password) {
+        this.password = password;
     }
 }

@@ -13,7 +13,6 @@ import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.couple.domain.Couple;
 import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
-import com.example.couplead.couple.repository.CoupleRepository;
 import com.example.couplead.media.dto.request.MediaCallActionRequest;
 import com.example.couplead.media.dto.response.MediaInviteResponse;
 import com.example.couplead.media.dto.response.MediaTokenResponse;
@@ -35,7 +34,6 @@ public class MediaServiceImpl
         private final UserRepository userRepository;
         private final CoupleMemberRepository coupleMemberRepository;
         private final SimpMessagingTemplate messagingTemplate;
-        private final CoupleRepository coupleRepository;
 
         @Value("${livekit.url}")
         private String livekitUrl;

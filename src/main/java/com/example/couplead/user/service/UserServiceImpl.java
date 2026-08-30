@@ -9,6 +9,7 @@ import com.example.couplead.couple.service.CoupleService;
 import com.example.couplead.user.domain.Provider;
 import com.example.couplead.user.domain.Role;
 import com.example.couplead.user.domain.User;
+import com.example.couplead.user.dto.request.ChangePasswordRequest;
 import com.example.couplead.user.dto.request.UpdateLocationRequest;
 import com.example.couplead.user.dto.request.UpdateProfileRequest;
 import com.example.couplead.user.dto.response.UserProfileResponse;
@@ -18,6 +19,7 @@ import com.example.couplead.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +28,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class UserServiceImpl implements UserService {
+        private static final String PREFIX = "refresh:";
         private final UserRepository userRepository;
         private final PasswordEncoder passwordEncoder;
         private final CoupleMemberRepository coupleMemberRepository;
         private final ApplicationEventPublisher eventPublisher;
         private final CoupleService coupleService;
+        private final StringRedisTemplate redisTemplate;
 
         private Long getCoupleId(User user) {
                 return coupleMemberRepository
@@ -231,5 +235,31 @@ public class UserServiceImpl implements UserService {
                                 request.timezone(),
                                 request.latitude(),
                                 request.longitude());
+        }
+
+        @Override
+        @Transactional
+        public void changePassword(Long userId, ChangePasswordRequest request) {
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+                if (!passwordEncoder.matches(
+                        request.currentPassword(),
+                        user.getPassword())) {
+                                throw new CustomException(ErrorCode.INVALID_PASSWORD);
+                        }
+
+                if (passwordEncoder.matches(
+                        request.newPassword(),
+                        user.getPassword()
+                )) {
+                        throw new CustomException(ErrorCode.SAME_PASSWORD);
+                }
+
+                String encodedPassword = passwordEncoder.encode(request.newPassword());
+
+                user.changePassword(encodedPassword);
+
+                redisTemplate.delete(PREFIX + userId);
         }
 }

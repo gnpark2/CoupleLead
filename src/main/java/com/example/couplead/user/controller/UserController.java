@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.common.file.FileStorageService;
 import com.example.couplead.common.response.ApiResponse;
+import com.example.couplead.user.dto.request.ChangePasswordRequest;
 import com.example.couplead.user.dto.request.UpdateLocationRequest;
 import com.example.couplead.user.dto.request.UpdateProfileRequest;
 import com.example.couplead.user.dto.response.UserMeResponse;
@@ -114,4 +115,15 @@ public class UserController {
         // return ApiResponse.success(body);
         // }
 
+        @PatchMapping("/me/password")
+        public ApiResponse<Void> changePassword(
+                        @AuthenticationPrincipal CustomUserDetails userDetails,
+                        @Valid @RequestBody ChangePasswordRequest request) {
+
+                userService.changePassword(
+                                userDetails.getUser().getId(),
+                                request);
+
+                return ApiResponse.success(null);
+        }
 }

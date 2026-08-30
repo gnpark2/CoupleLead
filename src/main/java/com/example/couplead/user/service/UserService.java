@@ -23,4 +23,6 @@ public interface UserService {
                         Long userId);
 
         void updateLocation(Long userId, UpdateLocationRequest request);
+
+        void changePassword(Long userId, ChangePasswordRequest request);
 }
