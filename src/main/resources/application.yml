@@ -3,7 +3,7 @@ spring:
     name: couplead
 
   datasource:
-    url: ${MYSQL_URL:jdbc:mysql://localhost:3306/${MYSQL_DATABASE}?serverTimezone=UTC}
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/${MYSQL_DATABASE}?serverTimezone=UTC}
     username: ${MYSQL_USER}
     password: ${MYSQL_PASSWORD}
 

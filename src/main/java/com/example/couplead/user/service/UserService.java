@@ -5,6 +5,7 @@ import com.example.couplead.auth.dto.response.SignupResponse;
 import com.example.couplead.user.dto.request.UpdateLocationRequest;
 import com.example.couplead.user.dto.request.UpdateProfileRequest;
 import com.example.couplead.user.dto.response.UserProfileResponse;
+import com.example.couplead.user.dto.request.ChangePasswordRequest;
 
 public interface UserService {
         SignupResponse signup(SignupRequest request);
