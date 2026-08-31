@@ -240,3 +240,9 @@ Authorization: Bearer {{accessToken}}
 ### Unread 테스트 API
 GET http://localhost:8080/api/chat/1/unread-boundary
 Authorization: Bearer {{accessToken}}
+
+########################################################
+
+### 날씨 조회
+GET /api/weather/partner/hourly
+Authorization: Bearer {{accessToken}}
