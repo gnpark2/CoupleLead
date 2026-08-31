@@ -54,6 +54,7 @@ public class ChatServiceImpl implements ChatService {
         private final ChatAnnouncementRepository chatAnnouncementRepository;
         private final CoupleRepository coupleRepository;
         private final ChatSearchService chatSearchService;
+        private final ChatUnreadCacheService chatUnreadCacheService;
 
         private ChatAnnouncementResponse toAnnouncementResponse(
                         ChatAnnouncement announcement) {
@@ -714,5 +715,35 @@ public class ChatServiceImpl implements ChatService {
                         throw new CustomException(
                                         ErrorCode.COUPLE_NOT_FOUND);
                 }
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public long getUnreadCount(
+                        Long userId,
+                        Long coupleId) {
+                validateCoupleMember(
+                                userId,
+                                coupleId);
+
+                long cached = chatUnreadCacheService.get(
+                                userId,
+                                coupleId);
+
+                if (cached >= 0) {
+                        return cached;
+                }
+
+                long unreadCount = messageRepository
+                                .countByCoupleIdAndSenderIdNotAndReadAtIsNull(
+                                                coupleId,
+                                                userId);
+
+                chatUnreadCacheService.set(
+                                userId,
+                                coupleId,
+                                unreadCount);
+
+                return unreadCount;
         }
 }

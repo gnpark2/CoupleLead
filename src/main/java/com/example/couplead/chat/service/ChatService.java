@@ -63,4 +63,8 @@ public interface ChatService {
         void validateCoupleMember(
                         Long userId,
                         Long coupleId);
+
+        long getUnreadCount(
+                        Long userId,
+                        Long coupleId);
 }

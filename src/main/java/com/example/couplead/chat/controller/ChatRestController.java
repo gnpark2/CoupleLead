@@ -222,4 +222,16 @@ public class ChatRestController {
 
                 return ApiResponse.success(null);
         }
+
+        @GetMapping("/{coupleId}/unread-count")
+        public ApiResponse<Long> getUnreadCount(
+                        @PathVariable Long coupleId,
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+                return ApiResponse.success(
+                                chatService.getUnreadCount(
+                                                userDetails
+                                                                .getUser()
+                                                                .getId(),
+                                                coupleId));
+        }
 }
