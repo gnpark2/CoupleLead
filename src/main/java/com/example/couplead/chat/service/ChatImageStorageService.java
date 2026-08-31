@@ -11,9 +11,6 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.couplead.common.exception.CustomException;
-import com.example.couplead.common.exception.ErrorCode;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

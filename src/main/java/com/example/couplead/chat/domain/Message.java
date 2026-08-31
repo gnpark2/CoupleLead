@@ -1,7 +1,6 @@
 package com.example.couplead.chat.domain;
 
 import java.time.Instant;
-import java.time.Instant;
 
 import com.example.couplead.common.entity.BaseEntity;
 import com.example.couplead.couple.domain.Couple;

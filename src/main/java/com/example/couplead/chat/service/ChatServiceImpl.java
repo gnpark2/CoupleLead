@@ -2,7 +2,6 @@ package com.example.couplead.chat.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -30,7 +29,6 @@ import com.example.couplead.chat.event.ChatMessageEditedEvent;
 import com.example.couplead.chat.event.ChatReadCommittedEvent;
 import com.example.couplead.chat.repository.ChatAnnouncementRepository;
 import com.example.couplead.chat.repository.MessageRepository;
-import com.example.couplead.chat.repository.MessageSearchRepository;
 import com.example.couplead.common.exception.CustomException;
 import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.couple.domain.Couple;
@@ -38,10 +36,8 @@ import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
 import com.example.couplead.couple.repository.CoupleRepository;
 import com.example.couplead.event.dto.ChatReadEvent;
-import com.example.couplead.event.producer.WidgetRefreshProducer;
 import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
-import com.example.couplead.widget.service.WidgetCacheService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -4,6 +4,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.couplead.auth.security.CustomUserDetails;
+import com.example.couplead.common.exception.CustomException;
+import com.example.couplead.common.exception.ErrorCode;
 import com.example.couplead.common.response.ApiResponse;
 import com.example.couplead.couple.domain.CoupleMember;
 import com.example.couplead.couple.repository.CoupleMemberRepository;
@@ -33,7 +35,7 @@ public class WidgetController {
         Long myUserId = userDetails.getUser().getId();
 
         CoupleMember member = coupleMemberRepository
-                .findByUser(userDetails.getUser()).orElseThrow();
+                .findByUser(userDetails.getUser()).orElseThrow(() -> new CustomException(ErrorCode.COUPLE_NOT_FOUND));
 
         Long coupleId = member.getCouple().getId();
         

@@ -2,8 +2,6 @@ package com.example.couplead.chat.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import com.example.couplead.chat.dto.response.ChatAnnouncementResponse;
