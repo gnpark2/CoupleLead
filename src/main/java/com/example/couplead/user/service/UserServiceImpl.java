@@ -117,6 +117,13 @@ public class UserServiceImpl implements UserService {
                 user.updateNickname(
                                 request.nickname());
 
+                user.updateLocation(
+                                request.country(),
+                                request.city(),
+                                request.timezone(),
+                                request.latitude(),
+                                request.longitude());
+
                 Long coupleId = getCoupleId(
                                 user);
 
@@ -130,7 +137,12 @@ public class UserServiceImpl implements UserService {
                                 user.getId(),
                                 user.getEmail(),
                                 user.getNickname(),
-                                user.getProfileImage());
+                                user.getProfileImage(),
+                                user.getCountry(),
+                                user.getCity(),
+                                user.getTimezone(),
+                                user.getLatitude(),
+                                user.getLongitude());
         }
 
         @Override
@@ -175,7 +187,12 @@ public class UserServiceImpl implements UserService {
                                 user.getId(),
                                 user.getEmail(),
                                 user.getNickname(),
-                                user.getProfileImage());
+                                user.getProfileImage(),
+                                user.getCountry(),
+                                user.getCity(),
+                                user.getTimezone(),
+                                user.getLatitude(),
+                                user.getLongitude());
         }
 
         @Override
@@ -241,18 +258,17 @@ public class UserServiceImpl implements UserService {
         @Transactional
         public void changePassword(Long userId, ChangePasswordRequest request) {
                 User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+                                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
                 if (!passwordEncoder.matches(
-                        request.currentPassword(),
-                        user.getPassword())) {
-                                throw new CustomException(ErrorCode.INVALID_PASSWORD);
-                        }
+                                request.currentPassword(),
+                                user.getPassword())) {
+                        throw new CustomException(ErrorCode.INVALID_PASSWORD);
+                }
 
                 if (passwordEncoder.matches(
-                        request.newPassword(),
-                        user.getPassword()
-                )) {
+                                request.newPassword(),
+                                user.getPassword())) {
                         throw new CustomException(ErrorCode.SAME_PASSWORD);
                 }
 
