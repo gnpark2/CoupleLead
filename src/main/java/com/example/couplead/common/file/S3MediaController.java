@@ -12,19 +12,16 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/media")
-public class MediaController {
+public class S3MediaController {
 
     private final S3FileService s3FileService;
 
     @GetMapping("/chat/{filename}")
     public ResponseEntity<byte[]> getChatImage(
             @PathVariable String filename) {
+        String key = "chat/" + filename;
 
-        String key = "chat/"
-                + filename;
-
-        S3FileService.S3File file = s3FileService.get(
-                key);
+        S3FileService.S3File file = s3FileService.get(key);
 
         MediaType contentType = MediaType.APPLICATION_OCTET_STREAM;
 
@@ -35,9 +32,7 @@ public class MediaController {
 
         return ResponseEntity
                 .ok()
-                .contentType(
-                        contentType)
-                .body(
-                        file.bytes());
+                .contentType(contentType)
+                .body(file.bytes());
     }
 }
