@@ -68,6 +68,11 @@ jwt:
   access-token-expiration: 1800000
   refresh-token-expiration: 1209600000
 
+aws:
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_REGION:ap-northeast-2}
+    
 livekit:
   url: ${LIVEKIT_URL}
   api-key: ${LIVEKIT_API_KEY}

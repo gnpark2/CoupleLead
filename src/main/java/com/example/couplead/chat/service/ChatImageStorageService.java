@@ -1,9 +1,6 @@
 package com.example.couplead.chat.service;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -11,15 +8,19 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.couplead.common.file.S3Properties;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ChatImageStorageService {
-
-        private static final Path CHAT_DIRECTORY = Paths.get(
-                        "uploads",
-                        "chat");
 
         private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
                         "jpg",
@@ -27,47 +28,66 @@ public class ChatImageStorageService {
                         "png",
                         "webp");
 
+        private final S3Client s3Client;
+
+        private final S3Properties s3Properties;
+
         public String save(
                         MultipartFile file) {
+
                 if (file == null ||
                                 file.isEmpty()) {
+
                         throw new IllegalArgumentException(
                                         "이미지 파일이 비어 있습니다.");
                 }
 
-                String originalFilename = file.getOriginalFilename();
-
                 String extension = getExtension(
-                                originalFilename);
+                                file.getOriginalFilename());
 
                 if (!ALLOWED_EXTENSIONS.contains(
                                 extension)) {
+
                         throw new IllegalArgumentException(
                                         "지원하지 않는 이미지 형식입니다.");
                 }
 
+                String key = "chat/"
+                                + UUID.randomUUID()
+                                + "."
+                                + extension;
+
                 try {
-                        Files.createDirectories(
-                                        CHAT_DIRECTORY);
+                        PutObjectRequest request = PutObjectRequest.builder()
+                                        .bucket(
+                                                        s3Properties.bucket())
+                                        .key(key)
+                                        .contentType(
+                                                        resolveContentType(
+                                                                        file,
+                                                                        extension))
+                                        .build();
 
-                        String filename = UUID.randomUUID()
-                                        + "."
-                                        + extension;
+                        s3Client.putObject(
+                                        request,
+                                        RequestBody.fromInputStream(
+                                                        file.getInputStream(),
+                                                        file.getSize()));
 
-                        Path target = CHAT_DIRECTORY
-                                        .resolve(filename)
-                                        .normalize();
+                        log.info(
+                                        "채팅 이미지 S3 업로드 완료: {}",
+                                        key);
 
-                        Files.copy(
-                                        file.getInputStream(),
-                                        target);
-
-                        return "/uploads/chat/"
-                                        + filename;
+                        /*
+                         * 전체 URL을 DB에 저장하지 않고
+                         * Object Key만 저장.
+                         */
+                        return key;
 
                 } catch (IOException e) {
-                        throw new RuntimeException(
-                                        "채팅 이미지 저장에 실패했습니다.",
+
+                        throw new IllegalStateException(
+                                        "채팅 이미지 S3 업로드에 실패했습니다.",
                                         e);
                 }
         }
@@ -80,10 +100,57 @@ public class ChatImageStorageService {
                                 .toList();
         }
 
+        public void delete(
+                        String key) {
+
+                if (key == null ||
+                                key.isBlank()) {
+                        return;
+                }
+
+                /*
+                 * 기존 로컬 이미지와
+                 * 새 S3 key 구분.
+                 */
+                if (!key.startsWith(
+                                "chat/")) {
+
+                        log.debug(
+                                        "S3 이미지가 아니므로 삭제 건너뜀: {}",
+                                        key);
+
+                        return;
+                }
+
+                try {
+                        DeleteObjectRequest request = DeleteObjectRequest.builder()
+                                        .bucket(
+                                                        s3Properties.bucket())
+                                        .key(key)
+                                        .build();
+
+                        s3Client.deleteObject(
+                                        request);
+
+                        log.info(
+                                        "채팅 이미지 S3 삭제: {}",
+                                        key);
+
+                } catch (Exception e) {
+
+                        log.warn(
+                                        "채팅 이미지 S3 삭제 실패: {}",
+                                        key,
+                                        e);
+                }
+        }
+
         private String getExtension(
                         String filename) {
+
                 if (filename == null ||
                                 !filename.contains(".")) {
+
                         throw new IllegalArgumentException(
                                         "파일 확장자가 없습니다.");
                 }
@@ -94,56 +161,30 @@ public class ChatImageStorageService {
                                 .toLowerCase();
         }
 
-        public void delete(
-                        String imagePath) {
-                if (imagePath == null ||
-                                imagePath.isBlank()) {
-                        return;
+        private String resolveContentType(
+                        MultipartFile file,
+                        String extension) {
+
+                if (file.getContentType() != null &&
+                                !file.getContentType()
+                                                .isBlank()) {
+
+                        return file.getContentType();
                 }
 
-                /*
-                 * 외부 이미지 URL은
-                 * 로컬 파일이 아니므로 제외
-                 */
-                if (imagePath.startsWith("http://") ||
-                                imagePath.startsWith("https://")) {
-                        return;
-                }
+                return switch (extension) {
 
-                String filename = imagePath.substring(
-                                imagePath.lastIndexOf('/') + 1);
+                        case "jpg", "jpeg" ->
+                                "image/jpeg";
 
-                Path target = CHAT_DIRECTORY
-                                .resolve(filename)
-                                .normalize();
+                        case "png" ->
+                                "image/png";
 
-                /*
-                 * uploads/chat 밖의 파일을
-                 * 지우지 못하도록 보호
-                 */
-                if (!target.startsWith(
-                                CHAT_DIRECTORY.normalize())) {
-                        log.warn(
-                                        "잘못된 채팅 이미지 경로: {}",
-                                        imagePath);
+                        case "webp" ->
+                                "image/webp";
 
-                        return;
-                }
-
-                try {
-                        boolean deleted = Files.deleteIfExists(
-                                        target);
-
-                        if (deleted) {
-                                log.info(
-                                                "채팅 이미지 삭제: {}",
-                                                target);
-                        }
-                } catch (IOException e) {
-                        log.warn(
-                                        "채팅 이미지 삭제 실패: {}",
-                                        target,
-                                        e);
-                }
+                        default ->
+                                "application/octet-stream";
+                };
         }
 }
