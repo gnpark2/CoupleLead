@@ -1,6 +1,5 @@
 package com.example.couplead.domain.service;
 
-
 import com.example.couplead.domain.entity.DeviceInstallation;
 import com.example.couplead.domain.repository.DeviceInstallationRepository;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -18,8 +17,7 @@ import java.util.List;
 public class FirebasePushServiceImpl
         implements FirebasePushService {
 
-    private final DeviceInstallationRepository
-            deviceInstallationRepository;
+    private final DeviceInstallationRepository deviceInstallationRepository;
 
     @Override
     public void sendToUser(
@@ -27,20 +25,16 @@ public class FirebasePushServiceImpl
             String title,
             String body,
             Long coupleId,
-            Long senderId
-    ) {
+            Long senderId) {
 
-        List<DeviceInstallation> devices =
-                deviceInstallationRepository
-                        .findAllByUserId(
-                                userId
-                        );
+        List<DeviceInstallation> devices = deviceInstallationRepository
+                .findAllByUserId(
+                        userId);
 
         if (devices.isEmpty()) {
             log.debug(
                     "[FCM] 등록된 기기 없음 userId={}",
-                    userId
-            );
+                    userId);
 
             return;
         }
@@ -49,55 +43,47 @@ public class FirebasePushServiceImpl
 
             try {
 
-                Message message =
-                        Message.builder()
+                Message message = Message.builder()
 
-                                /*
-                                 * OS notification
-                                 */
-                                .setNotification(
-                                        Notification.builder()
-                                                .setTitle(title)
-                                                .setBody(body)
-                                                .build()
-                                )
+                        /*
+                         * OS notification
+                         */
+                        .setNotification(
+                                Notification.builder()
+                                        .setTitle(title)
+                                        .setBody(body)
+                                        .build())
 
-                                /*
-                                 * 알림 클릭 시 Flutter에서 사용할 값
-                                 */
-                                .putData(
-                                        "type",
-                                        "CHAT_MESSAGE"
-                                )
-                                .putData(
-                                        "coupleId",
-                                        String.valueOf(
-                                                coupleId
-                                        )
-                                )
-                                .putData(
-                                        "senderId",
-                                        String.valueOf(
-                                                senderId
-                                        )
-                                )
+                        /*
+                         * 알림 클릭 시 Flutter에서 사용할 값
+                         */
+                        .putData(
+                                "type",
+                                "CHAT_MESSAGE")
+                        .putData(
+                                "coupleId",
+                                String.valueOf(
+                                        coupleId))
+                        .putData(
+                                "senderId",
+                                String.valueOf(
+                                        senderId))
 
-                                /*
-                                 * Firebase Admin 9.10+
-                                 * FID 사용
-                                 */
-                                .setFid(
-                                        device.getFid()
-                                )
+                        /*
+                         * Firebase Admin 9.10+
+                         * FID 사용
+                         */
+                        // .setFid(
+                        // device.getFid()
+                        // )
+                        .setToken(
+                                device.getFcmToken())
+                        .build();
 
-                                .build();
-
-                String response =
-                        FirebaseMessaging
-                                .getInstance()
-                                .send(
-                                        message
-                                );
+                String response = FirebaseMessaging
+                        .getInstance()
+                        .send(
+                                message);
 
                 log.info(
                         "[FCM] 발송 성공 "
@@ -106,8 +92,7 @@ public class FirebasePushServiceImpl
                                 + "response={}",
                         userId,
                         device.getFid(),
-                        response
-                );
+                        response);
 
             } catch (Exception e) {
 
@@ -117,8 +102,7 @@ public class FirebasePushServiceImpl
                                 + "fid={}",
                         userId,
                         device.getFid(),
-                        e
-                );
+                        e);
             }
         }
     }
