@@ -45,39 +45,37 @@ public class FirebasePushServiceImpl
 
                 Message message = Message.builder()
 
-                        /*
-                         * OS notification
-                         */
                         .setNotification(
                                 Notification.builder()
                                         .setTitle(title)
                                         .setBody(body)
                                         .build())
 
-                        /*
-                         * 알림 클릭 시 Flutter에서 사용할 값
-                         */
                         .putData(
                                 "type",
                                 "CHAT_MESSAGE")
+
                         .putData(
                                 "coupleId",
                                 String.valueOf(
                                         coupleId))
+
                         .putData(
                                 "senderId",
                                 String.valueOf(
                                         senderId))
 
+                        .putData(
+                                "senderNickname",
+                                title)
+
                         /*
-                         * Firebase Admin 9.10+
-                         * FID 사용
+                         * 현재 실제 테스트에서
+                         * 성공한 방식 유지
                          */
-                        // .setFid(
-                        // device.getFid()
-                        // )
                         .setToken(
                                 device.getFcmToken())
+
                         .build();
 
                 String response = FirebaseMessaging
