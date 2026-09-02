@@ -10,6 +10,7 @@ import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.common.response.ApiResponse;
 import com.example.couplead.domain.dto.request.DeviceRegisterRequest;
 import com.example.couplead.domain.service.DeviceService;
+import com.example.couplead.domain.service.FirebasePushService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 public class DeviceController {
 
     private final DeviceService deviceService;
+    private final FirebasePushService firebasePushService;
 
     @PostMapping
     public ApiResponse<Void> register(
@@ -30,6 +32,21 @@ public class DeviceController {
         deviceService.register(
                 userDetails.getUser().getId(),
                 request);
+
+        return ApiResponse.success(
+                null);
+    }
+
+    @PostMapping("/push/test")
+    public ApiResponse<Void> testPush(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        firebasePushService.sendToUser(
+                userDetails.getUser().getId(),
+                "Couplead",
+                "FCM 테스트 알림입니다.",
+                1L,
+                1L);
 
         return ApiResponse.success(
                 null);
