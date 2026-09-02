@@ -16,54 +16,132 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class StompAuthChannelInterceptor implements ChannelInterceptor {
+public class StompAuthChannelInterceptor
+        implements ChannelInterceptor {
+
     private final JwtProvider jwtProvider;
 
     @Override
-    public Message<?> preSend(Message<?> message, MessageChannel channel){
+    public Message<?> preSend(
+            Message<?> message,
+            MessageChannel channel) {
 
-    StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+        StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(
+                message,
+                StompHeaderAccessor.class);
 
-    if (accessor == null) {
+        if (accessor == null) {
+            return message;
+        }
+
+        StompCommand command = accessor.getCommand();
+
+        /*
+         * 1. CONNECT 시 JWT 인증
+         */
+        if (StompCommand.CONNECT.equals(
+                command)) {
+
+            String authHeader = accessor.getFirstNativeHeader(
+                    "Authorization");
+
+            log.info(
+                    "[STOMP AUTH] CONNECT "
+                            + "sessionId={} "
+                            + "authorizationPresent={}",
+                    accessor.getSessionId(),
+                    authHeader != null);
+
+            /*
+             * 중요:
+             * 인증 헤더가 없는데 연결을 허용하면
+             * 이후 SEND에서 Principal=null이 된다.
+             */
+            if (authHeader == null ||
+                    !authHeader.startsWith(
+                            "Bearer ")) {
+
+                log.warn(
+                        "[STOMP AUTH] CONNECT REJECTED "
+                                + "Authorization 없음 "
+                                + "sessionId={}",
+                        accessor.getSessionId());
+
+                throw new IllegalArgumentException(
+                        "STOMP Authorization header가 없습니다.");
+            }
+
+            String token = authHeader.substring(
+                    7);
+
+            if (!jwtProvider.validateToken(
+                    token)) {
+
+                log.warn(
+                        "[STOMP AUTH] CONNECT REJECTED "
+                                + "유효하지 않은 JWT "
+                                + "sessionId={}",
+                        accessor.getSessionId());
+
+                throw new IllegalArgumentException(
+                        "유효하지 않은 STOMP JWT입니다.");
+            }
+
+            Long userId = jwtProvider.extractUserId(
+                    token);
+
+            WebSocketPrincipal principal = new WebSocketPrincipal(
+                    userId);
+
+            /*
+             * 가장 중요한 부분.
+             *
+             * Spring이 이 Principal을
+             * 같은 STOMP session의
+             * SEND/SUBSCRIBE 등에 연결한다.
+             */
+            accessor.setUser(
+                    principal);
+
+            log.info(
+                    "[STOMP AUTH] CONNECT SUCCESS "
+                            + "sessionId={} "
+                            + "userId={}",
+                    accessor.getSessionId(),
+                    userId);
+        }
+
+        /*
+         * 2. SEND 진단
+         */
+        if (StompCommand.SEND.equals(
+                command)) {
+
+            log.info(
+                    "[STOMP AUTH] SEND "
+                            + "sessionId={} "
+                            + "user={}",
+                    accessor.getSessionId(),
+                    accessor.getUser());
+
+            /*
+             * 여기서 null이면
+             * CONNECT 인증이 정상적으로
+             * 유지되지 않은 것.
+             */
+            if (accessor.getUser() == null) {
+
+                log.warn(
+                        "[STOMP AUTH] SEND REJECTED "
+                                + "Principal=null "
+                                + "sessionId={}",
+                        accessor.getSessionId());
+
+                throw new IllegalStateException(
+                        "인증되지 않은 STOMP 세션입니다.");
+            }
+        }
+
         return message;
-    }
-
-    if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-        String authHeader = accessor.getFirstNativeHeader("Authorization");
-
-        log.info("STOMP CONNECT Authorization: {}", authHeader);
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-
-            if (jwtProvider.validateToken(token)) {
-                Long userId = jwtProvider.extractUserId(token);
-
-                log.info("WebSocket authenticated user: {}", userId);
-
-                WebSocketPrincipal principal = new WebSocketPrincipal(userId);
-
-                accessor.setUser(principal);
-
-                accessor.getSessionAttributes().put("userId", userId);
-            }
-        }
-    }
-    if (StompCommand.SEND.equals(accessor.getCommand())) {
-
-        log.info("SEND user: {}", accessor.getUser());
-
-        log.info("Session attributes: {}",
-            accessor.getSessionAttributes());
-
-        if (accessor.getUser() == null) {
-            Long userId = (Long) accessor.getSessionAttributes().get("userId");
-
-            if (userId != null) {
-                accessor.setUser(new WebSocketPrincipal(userId));
-            }
-        }
-    }
-    return message;
     }
 }
