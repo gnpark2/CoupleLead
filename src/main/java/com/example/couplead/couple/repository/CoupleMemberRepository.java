@@ -13,15 +13,26 @@ import com.example.couplead.user.domain.User;
 
 public interface CoupleMemberRepository extends JpaRepository<CoupleMember, Long> {
     Optional<CoupleMember> findByUser(User user);
+
     boolean existsByUser(User user);
+
     List<CoupleMember> findByCouple(Couple couple);
+
     @Query("""
-    SELECT cm
-    FROM CoupleMember cm
-    JOIN FETCH cm.user
-    WHERE cm.couple = :couple
-    """)
+            SELECT cm
+            FROM CoupleMember cm
+            JOIN FETCH cm.user
+            WHERE cm.couple = :couple
+            """)
     List<CoupleMember> findByCoupleWithUser(
-        @Param("couple") Couple couple
-    );
+            @Param("couple") Couple couple);
+
+    @Query("""
+            SELECT cm
+            FROM CoupleMember cm
+            JOIN FETCH cm.user
+            WHERE cm.couple.id = :coupleId
+            """)
+    List<CoupleMember> findByCoupleIdWithUser(
+            @Param("coupleId") Long coupleId);
 }
