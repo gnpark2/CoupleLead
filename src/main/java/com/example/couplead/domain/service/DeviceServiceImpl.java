@@ -43,6 +43,8 @@ public class DeviceServiceImpl
                                 .user(user)
                                 .fid(
                                         request.fid())
+                                .fcmToken(
+                                        request.fcmToken())
                                 .platform(
                                         request.platform())
                                 .build());
@@ -54,6 +56,7 @@ public class DeviceServiceImpl
          */
         device.updateOwner(
                 user,
+                request.fcmToken(),
                 request.platform());
 
         deviceInstallationRepository

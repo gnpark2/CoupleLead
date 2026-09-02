@@ -7,11 +7,11 @@ import jakarta.validation.constraints.NotNull;
 
 public record DeviceRegisterRequest(
 
-    @NotBlank
-    String fid,
+        @NotBlank String fid,
 
-    @NotNull
-    DevicePlatform platform
+        @NotBlank String fcmToken,
+
+        @NotNull DevicePlatform platform
 
 ) {
 }
