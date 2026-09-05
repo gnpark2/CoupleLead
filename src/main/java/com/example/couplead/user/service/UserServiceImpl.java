@@ -242,9 +242,15 @@ public class UserServiceImpl implements UserService {
         }
 
         @Override
-        public void updateLocation(Long userId, UpdateLocationRequest request) {
-                User user = userRepository.findById(userId)
-                                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        @Transactional
+        public void updateLocation(
+                        Long userId,
+                        UpdateLocationRequest request) {
+                User user = userRepository
+                                .findById(userId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.USER_NOT_FOUND));
 
                 user.updateLocation(
                                 request.country(),
@@ -252,6 +258,15 @@ public class UserServiceImpl implements UserService {
                                 request.timezone(),
                                 request.latitude(),
                                 request.longitude());
+
+                Long coupleId = getCoupleId(
+                                user);
+
+                if (coupleId != null) {
+                        eventPublisher.publishEvent(
+                                        new ProfileUpdatedEvent(
+                                                        coupleId));
+                }
         }
 
         @Override
