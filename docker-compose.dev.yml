@@ -190,6 +190,7 @@ services:
 
     volumes:
         - ./secrets/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
+        - ./uploads:/app/uploads
 
     depends_on:
       mysql:
