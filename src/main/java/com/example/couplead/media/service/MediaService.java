@@ -9,19 +9,19 @@ public interface MediaService {
     MediaTokenResponse createToken(
             Long userId);
 
+    MediaTokenResponse createOverlayToken(
+            Long userId);
+
     MediaInviteResponse invite(
-        Long userId
-    );
+            Long userId);
 
     void accept(
-        Long userId,
-        MediaCallActionRequest request
-    );
+            Long userId,
+            MediaCallActionRequest request);
 
     void reject(
-        Long userId,
-        MediaCallActionRequest request
-    );
+            Long userId,
+            MediaCallActionRequest request);
 
     void leave(Long userId);
 }

@@ -34,6 +34,17 @@ public class MediaController {
                                                                 .getId()));
         }
 
+        @PostMapping("/overlay/token")
+        public ApiResponse<MediaTokenResponse> createOverlayToken(
+                        @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+                return ApiResponse.success(
+                                mediaService.createOverlayToken(
+                                                userDetails
+                                                                .getUser()
+                                                                .getId()));
+        }
+
         @PostMapping("/invite")
         public ApiResponse<MediaInviteResponse> invite(
                         @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -73,5 +84,4 @@ public class MediaController {
 
                 return ApiResponse.success(null);
         }
-
 }

@@ -20,6 +20,10 @@ import com.example.couplead.user.domain.User;
 import com.example.couplead.user.repository.UserRepository;
 
 import io.livekit.server.AccessToken;
+import io.livekit.server.CanPublish;
+import io.livekit.server.CanPublishData;
+import io.livekit.server.CanSubscribe;
+import io.livekit.server.Hidden;
 import io.livekit.server.RoomJoin;
 import io.livekit.server.RoomName;
 
@@ -76,6 +80,101 @@ public class MediaServiceImpl
                 accessToken.addGrants(
                                 new RoomJoin(true),
                                 new RoomName(roomName));
+
+                String token = accessToken.toJwt();
+
+                return new MediaTokenResponse(
+                                livekitUrl,
+                                token,
+                                roomName);
+        }
+
+        @Override
+        public MediaTokenResponse createOverlayToken(
+                        Long userId) {
+
+                User user = userRepository
+                                .findById(userId)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.USER_NOT_FOUND));
+
+                CoupleMember member = coupleMemberRepository
+                                .findByUser(user)
+                                .orElseThrow(
+                                                () -> new CustomException(
+                                                                ErrorCode.COUPLE_NOT_FOUND));
+
+                Long coupleId = member
+                                .getCouple()
+                                .getId();
+
+                /*
+                 * 기존 MediaPage가 사용하는 Room과
+                 * 반드시 같은 Room에 들어가야 한다.
+                 */
+                String roomName = "couple-" + coupleId;
+
+                /*
+                 * 중요:
+                 *
+                 * 기존 MediaPage participant:
+                 *
+                 * user-1
+                 *
+                 * Overlay participant:
+                 *
+                 * user-1-overlay-UUID
+                 *
+                 * 동일 identity를 사용하면 안 된다.
+                 */
+                String identity = "user-"
+                                + userId
+                                + "-overlay-"
+                                + UUID.randomUUID();
+
+                AccessToken accessToken = new AccessToken(
+                                apiKey,
+                                apiSecret);
+
+                accessToken.setIdentity(
+                                identity);
+
+                accessToken.addGrants(
+                                /*
+                                 * 해당 Room 입장
+                                 */
+                                new RoomJoin(
+                                                true),
+
+                                new RoomName(
+                                                roomName),
+
+                                /*
+                                 * Overlay는 publish 금지
+                                 */
+                                new CanPublish(
+                                                false),
+
+                                /*
+                                 * 상대방/본인의 화면 공유를
+                                 * 받아야 하므로 subscribe 허용
+                                 */
+                                new CanSubscribe(
+                                                true),
+
+                                /*
+                                 * data publish도 필요 없음
+                                 */
+                                new CanPublishData(
+                                                false),
+
+                                /*
+                                 * Overlay participant는
+                                 * 일반 참가자 목록에서 숨김
+                                 */
+                                new Hidden(
+                                                true));
 
                 String token = accessToken.toJwt();
 
