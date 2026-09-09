@@ -1,3 +1,88 @@
+# spring:
+#   application:
+#     name: couplead
+
+#   datasource:
+#     url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/${MYSQL_DATABASE}?serverTimezone=UTC
+#     username: ${MYSQL_USER}
+#     password: ${MYSQL_PASSWORD}
+
+#   jpa:
+#     hibernate:
+#       ddl-auto: update
+#     properties:
+#       hibernate:
+#         format_sql: true
+#     open-in-view: false
+
+#   data:
+#     redis:
+#       host: ${REDIS_HOST}
+#       port: ${REDIS_PORT}
+#       password: ${REDIS_PASSWORD}
+
+#   servlet:
+#     multipart:
+#       max-file-size: 5MB
+#       max-request-size: 5MB
+
+#   kafka:
+#     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+#     consumer:
+#       group-id: widget-cache-group
+#       auto-offset-reset: earliest
+#       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+#       value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+
+#       properties:
+#         spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+#         spring.json.trusted.packages: com.example.couplead.*
+#         spring.json.use.type.headers: true
+
+#     producer:
+#       key-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+#       #  객체를 JSON으로 직렬화
+#       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+#   elasticsearch:
+#     uris: ${ELASTICSEARCH_URI}
+
+#   output:
+#     ansi:
+#       enabled: ALWAYS
+
+# auth:
+#   cookie:
+#     secure: ${AUTH_COOKIE_SECURE:false}
+#     same-site: ${AUTH_COOKIE_SAME_SITE:Lax}
+#     max-age-days: ${AUTH_COOKIE_MAX_AGE_DAYS:14}
+
+# weather:
+#   openweather:
+#     base-url: https://api.openweathermap.org
+#     api-key: ${OPENWEATHER_API_KEY}
+
+# jwt:
+#   secret: ${JWT_SECRET}
+#   access-token-expiration: 1800000
+#   refresh-token-expiration: 1209600000
+
+# aws:
+#   s3:
+#     bucket: ${AWS_S3_BUCKET}
+#     region: ${AWS_REGION:ap-northeast-2}
+    
+# livekit:
+#   url: ${LIVEKIT_URL}
+#   api-key: ${LIVEKIT_API_KEY}
+#   api-secret: ${LIVEKIT_API_SECRET}
+
+# logging:
+#   level:
+#     org.hibernate.SQL: debug
+#     org.hibernate.orm.jdbc.bind: trace
+
 spring:
   application:
     name: couplead
@@ -8,11 +93,6 @@ spring:
     password: ${MYSQL_PASSWORD}
 
   jpa:
-    hibernate:
-      ddl-auto: update
-    properties:
-      hibernate:
-        format_sql: true
     open-in-view: false
 
   data:
@@ -28,6 +108,7 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
     consumer:
       group-id: widget-cache-group
       auto-offset-reset: earliest
@@ -41,16 +122,10 @@ spring:
 
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-
-      #  객체를 JSON으로 직렬화
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
   elasticsearch:
     uris: ${ELASTICSEARCH_URI}
-
-  output:
-    ansi:
-      enabled: ALWAYS
 
 auth:
   cookie:
@@ -72,13 +147,8 @@ aws:
   s3:
     bucket: ${AWS_S3_BUCKET}
     region: ${AWS_REGION:ap-northeast-2}
-    
+
 livekit:
   url: ${LIVEKIT_URL}
   api-key: ${LIVEKIT_API_KEY}
   api-secret: ${LIVEKIT_API_SECRET}
-
-logging:
-  level:
-    org.hibernate.SQL: debug
-    org.hibernate.orm.jdbc.bind: trace

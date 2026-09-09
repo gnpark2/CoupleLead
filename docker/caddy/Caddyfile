@@ -1,7 +1,9 @@
 dev-api.couplead.app {
-        reverse_proxy backend:8080
+    encode zstd gzip
+
+    reverse_proxy backend:8080
 }
 
 dev-livekit.couplead.app {
-        reverse_proxy livekit:7880
+    reverse_proxy livekit:7880
 }
