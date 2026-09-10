@@ -5,3 +5,7 @@ api.couplead.app {
 livekit.couplead.app {
     reverse_proxy livekit:7880
 }
+
+grafana.couplead.app {
+    reverse_proxy grafana:3000
+}

@@ -267,6 +267,35 @@ services:
     networks:
       - couplead-prod-network
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: couplead-prod-prometheus
+    restart: unless-stopped
+
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prod-prometheus-data:/prometheus
+
+    networks:
+      - couplead-prod-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: couplead-prod-grafana
+    restart: unless-stopped
+
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+
+    volumes:
+      - prod-grafana-data:/var/lib/grafana
+
+    networks:
+      - couplead-prod-network
+
+    depends_on:
+      - prometheus
 
 networks:
   couplead-prod-network:
@@ -280,3 +309,5 @@ volumes:
   prod-elasticsearch-data:
   prod-caddy-data:
   prod-caddy-config:
+  prod-prometheus-data:
+  prod-grafana-data:

@@ -16,3 +16,20 @@ logging:
     root: INFO
     org.hibernate.SQL: INFO
     org.hibernate.orm.jdbc.bind: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+
+  endpoint:
+    health:
+      show-details: never
+
+  prometheus:
+    metrics:
+      export:
+        enabled: true
