@@ -88,6 +88,7 @@ import com.example.couplead.auth.dto.request.LoginRequest;
 import com.example.couplead.auth.dto.request.ReissueRequest;
 import com.example.couplead.auth.dto.response.LoginResponse;
 import com.example.couplead.auth.dto.response.TokenResponse;
+import com.example.couplead.auth.performance.LoginPerformanceContext;
 import com.example.couplead.auth.security.CustomUserDetails;
 import com.example.couplead.auth.security.JwtProvider;
 import com.example.couplead.user.domain.User;
@@ -110,78 +111,89 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginResponse login(LoginRequest request) {
+        LoginPerformanceContext.start();
+
         long totalStart = System.nanoTime();
 
-        Authentication authentication =
-            authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    request.email(),
-                    request.password()
-                )
-            );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.email(),
+                            request.password()));
 
-        long afterAuthentication = System.nanoTime();
+            long afterAuthentication = System.nanoTime();
 
-        CustomUserDetails principal =
-            (CustomUserDetails) authentication.getPrincipal();
+            CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
 
-        User user = principal.getUser();
+            User user = principal.getUser();
 
-        long accessTokenStart = System.nanoTime();
+            long accessTokenStart = System.nanoTime();
 
-        String accessToken =
-            jwtProvider.createAccessToken(
-                user.getId(),
-                user.getRole()
-            );
+            String accessToken = jwtProvider.createAccessToken(
+                    user.getId(),
+                    user.getRole());
 
-        long afterAccessToken = System.nanoTime();
+            long afterAccessToken = System.nanoTime();
 
-        String refreshToken =
-            jwtProvider.createRefreshToken(user.getId());
+            String refreshToken = jwtProvider.createRefreshToken(user.getId());
 
-        long afterRefreshToken = System.nanoTime();
+            long afterRefreshToken = System.nanoTime();
 
-        refreshTokenService.save(
-            user.getId(),
-            refreshToken
-        );
+            refreshTokenService.save(
+                    user.getId(),
+                    refreshToken);
 
-        long afterRedis = System.nanoTime();
+            long afterRedis = System.nanoTime();
 
-        /*
-         * 모든 로그인마다 로그를 남기면 로그 출력 자체가
-         * 테스트 결과에 영향을 줄 수 있으므로 20건마다 1번 기록한다.
-         */
-        long loginCount = LOGIN_COUNTER.incrementAndGet();
+            long authenticationNanos = afterAuthentication - totalStart;
 
-        if (loginCount % 20 == 0) {
-            log.info(
-                "[LOGIN PERFORMANCE] authentication={}ms, "
-                    + "accessToken={}ms, refreshToken={}ms, "
-                    + "redis={}ms, total={}ms",
-                toMillis(
-                    afterAuthentication - totalStart
-                ),
-                toMillis(
-                    afterAccessToken - accessTokenStart
-                ),
-                toMillis(
-                    afterRefreshToken - afterAccessToken
-                ),
-                toMillis(
-                    afterRedis - afterRefreshToken
-                ),
-                toMillis(
-                    afterRedis - totalStart
-                )
-            );
+            long userQueryNanos = LoginPerformanceContext.getUserQueryNanos();
+
+            long passwordNanos = LoginPerformanceContext.getPasswordNanos();
+
+            long securityOverheadNanos = Math.max(
+                    0L,
+                    authenticationNanos
+                            - userQueryNanos
+                            - passwordNanos);
+
+            long loginCount = LOGIN_COUNTER.incrementAndGet();
+
+            if (loginCount % 20 == 0) {
+                log.info(
+                        "[LOGIN PERFORMANCE DETAIL] "
+                                + "userQuery={}ms, "
+                                + "password={}ms, "
+                                + "securityOverhead={}ms, "
+                                + "authentication={}ms, "
+                                + "accessToken={}ms, "
+                                + "refreshToken={}ms, "
+                                + "redis={}ms, "
+                                + "total={}ms",
+                        toMillis(userQueryNanos),
+                        toMillis(passwordNanos),
+                        toMillis(securityOverheadNanos),
+                        toMillis(authenticationNanos),
+                        toMillis(
+                                afterAccessToken
+                                        - accessTokenStart),
+                        toMillis(
+                                afterRefreshToken
+                                        - afterAccessToken),
+                        toMillis(
+                                afterRedis
+                                        - afterRefreshToken),
+                        toMillis(
+                                afterRedis
+                                        - totalStart));
+            }
+
+            return new LoginResponse(
+                    accessToken,
+                    refreshToken);
+        } finally {
+            LoginPerformanceContext.clear();
         }
-
-        return new LoginResponse(
-            accessToken,
-            refreshToken
-        );
     }
 
     private double toMillis(long nanos) {
@@ -192,56 +204,44 @@ public class AuthServiceImpl implements AuthService {
     public TokenResponse reissue(ReissueRequest request) {
         if (!jwtProvider.validateToken(request.refreshToken())) {
             throw new RuntimeException(
-                "유효하지 않은 Refresh Token"
-            );
+                    "유효하지 않은 Refresh Token");
         }
 
-        Long userId =
-            jwtProvider.extractUserId(request.refreshToken());
+        Long userId = jwtProvider.extractUserId(request.refreshToken());
 
         if (!refreshTokenService.validate(
-            userId,
-            request.refreshToken()
-        )) {
+                userId,
+                request.refreshToken())) {
             throw new RuntimeException(
-                "저장된 Refresh Token이 아닙니다."
-            );
+                    "저장된 Refresh Token이 아닙니다.");
         }
 
-        User user =
-            userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow();
 
-        String newAccess =
-            jwtProvider.createAccessToken(
+        String newAccess = jwtProvider.createAccessToken(
                 user.getId(),
-                user.getRole()
-            );
+                user.getRole());
 
-        String newRefresh =
-            jwtProvider.createRefreshToken(user.getId());
+        String newRefresh = jwtProvider.createRefreshToken(user.getId());
 
         refreshTokenService.save(
-            user.getId(),
-            newRefresh
-        );
+                user.getId(),
+                newRefresh);
 
         return new TokenResponse(
-            newAccess,
-            newRefresh
-        );
+                newAccess,
+                newRefresh);
     }
 
     @Override
     public void logout(String refreshToken) {
         if (!jwtProvider.validateToken(refreshToken)) {
             throw new RuntimeException(
-                "유효하지 않은 Refresh Token"
-            );
+                    "유효하지 않은 Refresh Token");
         }
 
-        Long userId =
-            jwtProvider.extractUserId(refreshToken);
+        Long userId = jwtProvider.extractUserId(refreshToken);
 
         refreshTokenService.delete(userId);
     }
