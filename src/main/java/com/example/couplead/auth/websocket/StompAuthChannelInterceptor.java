@@ -117,7 +117,7 @@ public class StompAuthChannelInterceptor
         if (StompCommand.SEND.equals(
                 command)) {
 
-            log.info(
+            log.debug(
                     "[STOMP AUTH] SEND "
                             + "sessionId={} "
                             + "user={}",

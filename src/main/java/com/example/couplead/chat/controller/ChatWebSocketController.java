@@ -71,7 +71,7 @@ public class ChatWebSocketController {
                         }
                 }
 
-                log.info(
+                log.debug(
                                 "[CHAT SEND] clientMessageId={}",
                                 request.clientMessageId());
 
